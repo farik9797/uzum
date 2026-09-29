@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Менеджер Uzum за 21 день</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -78,7 +79,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 .tab:hover{color:var(--ink)}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 main{padding-block:28px 80px}
-section[role="tabpanel"]{display:grid;gap:36px}
+section[role="tabpanel"]{display:grid;grid-template-columns:minmax(0,1fr);gap:36px}
+@media (max-width:640px){
+  .tabs{padding-right:44px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+  .tab{padding:13px 11px 11px;font-size:14.5px}
+}
 
 /* generic blocks */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
