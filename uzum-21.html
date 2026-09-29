@@ -42,8 +42,8 @@ body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body);-webkit-f
 .wrap{max-width:1160px;margin:0 auto;padding-inline:24px}
 @media (max-width:520px){.wrap{padding-inline:16px}}
 h1,h2,h3,h4{text-wrap:balance;margin:0}
-h1{font:700 clamp(28px,5vw,48px)/1.08 var(--f-display);letter-spacing:-.01em}
-h2{font:700 clamp(21px,2.6vw,27px)/1.2 var(--f-display);letter-spacing:-.005em}
+h1{font:700 34px/1.08 var(--f-display);font:700 clamp(28px,5vw,48px)/1.08 var(--f-display);letter-spacing:-.01em}
+h2{font:700 23px/1.2 var(--f-display);font:700 clamp(21px,2.6vw,27px)/1.2 var(--f-display);letter-spacing:-.005em}
 h3{font:600 19px/1.3 var(--f-body);margin-top:30px}
 h4{font:600 16px/1.35 var(--f-body)}
 p{margin:0}
@@ -407,6 +407,19 @@ details.qa .a ul,details.qa .a ol{margin:0;padding-left:20px}
 <p class="foot">Неофициальный учебный тренажёр, не связан с Uzum. Комиссии, тарифы и правила площадки меняются — перед работой сверяйте цифры с разделами кабинета продавца и справкой Uzum.</p>
 </main>
 
+<div id="err-banner" hidden style="position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99;background:#B3352A;color:#fff;border-radius:10px;padding:12px 14px;font:14px/1.45 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3)"><b>Страница сработала с ошибкой.</b> Пришлите этот текст разработчику: <span id="err-text" style="font-family:ui-monospace,Menlo,monospace;word-break:break-word"></span></div>
+<script>
+(function(){
+  function show(msg){
+    var b=document.getElementById('err-banner'),t=document.getElementById('err-text');
+    if(!b||!t)return;
+    t.textContent=String(msg).slice(0,300)+' · '+navigator.userAgent.slice(0,160);
+    b.hidden=false;b.style.display='block';
+  }
+  window.addEventListener('error',function(e){show((e&&e.message)||'error')});
+  window.addEventListener('unhandledrejection',function(e){var r=e&&e.reason;if(r&&r.code)return;show('Promise: '+((r&&r.message)||r))});
+})();
+</script>
 <script>
 /* ================= DATA ================= */
 const BLOCKS=[
@@ -816,10 +829,10 @@ function showTab(id,push){
   TABS.forEach(t=>{document.getElementById('p-'+t).hidden=t!==id});
   if(push!==false){try{history.replaceState(null,'','#'+id)}catch(e){}}
 }
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{showTab(b.dataset.tab);window.scrollTo({top:document.querySelector('.tabbar').offsetTop,behavior:'instant'})}));
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{showTab(b.dataset.tab);window.scrollTo(0,document.querySelector('.tabbar').offsetTop)}));
 document.addEventListener('click',e=>{
   const o=e.target.closest('[data-open]');if(o){openLesson(o.dataset.open);return}
-  const g=e.target.closest('[data-go]');if(g){showTab(g.dataset.go);window.scrollTo({top:document.querySelector('.tabbar').offsetTop,behavior:'instant'})}
+  const g=e.target.closest('[data-go]');if(g){showTab(g.dataset.go);window.scrollTo(0,document.querySelector('.tabbar').offsetTop)}
 });
 
 /* ================= PROGRESS UI ================= */
@@ -862,7 +875,7 @@ function openLesson(id,stay){
   syncLessonBtn();renderLnav();mountWidgets();
   showTab('lessons',false);try{history.replaceState(null,'','#'+L.id)}catch(e){}
   const top=document.querySelector('.tabbar').offsetTop;
-  if(!stay||window.scrollY>top)window.scrollTo({top,behavior:'instant'});
+  if(!stay||window.scrollY>top)window.scrollTo(0,top);
 }
 
 /* ================= WIDGETS ================= */
@@ -1006,7 +1019,7 @@ card(el){
 Описание: ${$('#c-desc').value}`;
       try{
         const r=await sample.json(prompt);
-        out.innerHTML=`<div class="ai-out"><div class="row"><span class="score">${esc(r.score??'—')}/10</span><span>${esc(r.verdict||'')}</span></div>${r.good&&r.good.length?`<div><b>Хорошо</b><ul>${r.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${r.fix&&r.fix.length?`<div><b>Исправить</b><ul>${r.fix.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${r.title_ru?`<div><b>Название RU:</b> ${esc(r.title_ru)}</div>`:''}${r.title_uz?`<div><b>Название UZ:</b> ${esc(r.title_uz)}</div>`:''}${r.keywords&&r.keywords.length?`<div><b>Ключевые запросы:</b> ${r.keywords.map(esc).join(', ')}</div>`:''}</div>`;
+        out.innerHTML=`<div class="ai-out"><div class="row"><span class="score">${esc(r.score!=null?r.score:'—')}/10</span><span>${esc(r.verdict||'')}</span></div>${r.good&&r.good.length?`<div><b>Хорошо</b><ul>${r.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${r.fix&&r.fix.length?`<div><b>Исправить</b><ul>${r.fix.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${r.title_ru?`<div><b>Название RU:</b> ${esc(r.title_ru)}</div>`:''}${r.title_uz?`<div><b>Название UZ:</b> ${esc(r.title_uz)}</div>`:''}${r.keywords&&r.keywords.length?`<div><b>Ключевые запросы:</b> ${r.keywords.map(esc).join(', ')}</div>`:''}</div>`;
       }catch(e){
         if(HIDE_CODES.includes(e&&e.code)){go.hidden=true;off.hidden=false;out.innerHTML=''}
         else out.innerHTML=`<div class="ai-out">${aiErr(e)}</div>`;
@@ -1039,7 +1052,7 @@ review(el){
 Ответ стажёра: ${ans}`;
       try{
         const j=await sample.json(prompt);
-        out.innerHTML=`<div class="ai-out"><div class="score">${esc(j.score??'—')}/10</div>${j.good&&j.good.length?`<div><b>Хорошо</b><ul>${j.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${j.fix&&j.fix.length?`<div><b>Исправить</b><ul>${j.fix.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${j.example?`<div><b>Образец:</b> ${esc(j.example)}</div>`:''}</div>`;
+        out.innerHTML=`<div class="ai-out"><div class="score">${esc(j.score!=null?j.score:'—')}/10</div>${j.good&&j.good.length?`<div><b>Хорошо</b><ul>${j.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${j.fix&&j.fix.length?`<div><b>Исправить</b><ul>${j.fix.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${j.example?`<div><b>Образец:</b> ${esc(j.example)}</div>`:''}</div>`;
       }catch(e){
         if(HIDE_CODES.includes(e&&e.code)){go.hidden=true;off.hidden=false;out.innerHTML=''}
         else out.innerHTML=`<div class="ai-out">${aiErr(e)}</div>`;
