@@ -1,0 +1,1189 @@
+<meta charset="utf-8">
+<title>Менеджер Uzum за 21 день</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --surface-2:#E7EDEB; --line:#D0DAD7; --ink:#11201D; --muted:#55625E;
+  --accent:#0A7670; --accent-ink:#FFFFFF; --accent-soft:#D3EBE8;
+  --label:#F2B233; --label-ink:#2A1E00;
+  --good:#1B7C45; --good-soft:#DCF0E3; --warn:#946010; --warn-soft:#FAEED3; --bad:#B3352A; --bad-soft:#F7E0DC;
+  --bar:#0A7670; --bar-track:#E7EDEB;
+  --shadow:0 1px 2px rgba(8,32,28,.06),0 6px 20px rgba(8,32,28,.05);
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0D1413; --surface:#141D1B; --surface-2:#1B2624; --line:#2A3835; --ink:#E3EBE9; --muted:#95A4A0;
+    --accent:#3FBFB5; --accent-ink:#04201D; --accent-soft:#17322F;
+    --label:#E8B04A; --label-ink:#231800;
+    --good:#52C483; --good-soft:#16301F; --warn:#E3AA4C; --warn-soft:#33270F; --bad:#F07A6D; --bad-soft:#3A1C18;
+    --bar:#3FBFB5; --bar-track:#1F2B29;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D1413; --surface:#141D1B; --surface-2:#1B2624; --line:#2A3835; --ink:#E3EBE9; --muted:#95A4A0;
+  --accent:#3FBFB5; --accent-ink:#04201D; --accent-soft:#17322F;
+  --label:#E8B04A; --label-ink:#231800;
+  --good:#52C483; --good-soft:#16301F; --warn:#E3AA4C; --warn-soft:#33270F; --bad:#F07A6D; --bad-soft:#3A1C18;
+  --bar:#3FBFB5; --bar-track:#1F2B29;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:24px}
+@media (max-width:520px){.wrap{padding-inline:16px}}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+h1{font:700 clamp(28px,5vw,48px)/1.08 var(--f-display);letter-spacing:-.01em}
+h2{font:700 clamp(21px,2.6vw,27px)/1.2 var(--f-display);letter-spacing:-.005em}
+h3{font:600 19px/1.3 var(--f-body);margin-top:30px}
+h4{font:600 16px/1.35 var(--f-body)}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:3px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font:600 12px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* header */
+.top{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:end;padding-block:36px 26px}
+@media (max-width:860px){.top{grid-template-columns:1fr;gap:22px;padding-block:24px 18px}}
+.top .lede{margin-top:14px;max-width:60ch;color:var(--muted);font-size:17px}
+.label-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px 14px;box-shadow:var(--shadow)}
+.lc-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.lc-head b{font:600 22px/1 var(--f-mono)}
+.barcode{display:flex;align-items:stretch;gap:3px;height:54px;margin:12px 0 8px}
+.barcode span{flex:1 1 0;background:var(--bar-track);border-radius:1px;transition:background .25s}
+.barcode span.w{flex-grow:1.9}
+.barcode span.on{background:var(--ink)}
+.lc-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font:500 12.5px/1.4 var(--f-mono);color:var(--muted)}
+.lc-meta b{color:var(--ink);font-weight:600}
+.sync{margin-top:10px;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block}
+.sync.cloud i{background:var(--good)}
+
+/* tabs */
+.tabbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:none;padding:14px 14px 12px;font-weight:600;font-size:15px;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+main{padding-block:28px 80px}
+section[role="tabpanel"]{display:grid;gap:36px}
+
+/* generic blocks */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+@media (max-width:520px){.panel{padding:18px 16px}}
+.sec-head{display:grid;gap:8px;max-width:72ch}
+.sec-head p{color:var(--muted)}
+.grid-5{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#routes.grid-5{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:980px){.grid-5,#routes.grid-5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.grid-5,#routes.grid-5{grid-template-columns:1fr}}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:8px;align-content:start}
+.block .tagline{font:600 12px/1.2 var(--f-mono);color:var(--accent);letter-spacing:.04em}
+.block h4{font-size:16.5px}
+.block p{font-size:14.5px;color:var(--muted)}
+.linkbtn{appearance:none;border:0;background:none;padding:0;color:var(--accent);font-weight:600;cursor:pointer;text-align:left;font-size:14.5px;text-decoration:underline;text-underline-offset:3px}
+.btn{appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:600;border-radius:8px;padding:10px 16px;cursor:pointer;font-size:15px;line-height:1.2}
+.btn:hover{filter:brightness(1.07)}
+.btn:disabled{opacity:.55;cursor:default;filter:none}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{padding:7px 12px;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1 var(--f-body);padding:6px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink);white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.acc{background:var(--accent-soft);color:var(--accent)}
+.note{border-left:3px solid var(--label);background:var(--surface);padding:12px 16px;border-radius:0 8px 8px 0;font-size:15px}
+.note b{font-weight:600}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px/1.3 var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* plan */
+.weeks{display:grid;gap:26px}
+.week-h{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.week-h h3{margin:0}
+.days{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+@media (max-width:520px){.days{grid-template-columns:1fr}}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-content:start}
+.day.done{background:var(--surface-2)}
+.day.done .day-t{text-decoration:line-through;text-decoration-color:var(--muted)}
+.shelf{grid-row:span 3;font:600 12px/1 var(--f-mono);background:var(--label);color:var(--label-ink);padding:7px 7px 6px;border-radius:4px;height:max-content;text-align:center;min-width:44px}
+.shelf small{display:block;font-size:9.5px;font-weight:400;letter-spacing:.06em;margin-bottom:3px;opacity:.8}
+.day-t{font-weight:600;font-size:15.5px;line-height:1.35}
+.day ul{margin:2px 0 0;padding-left:18px;font-size:14px;color:var(--muted)}
+.day ul li+li{margin-top:2px}
+.day-f{grid-column:2;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.check{display:inline-flex;gap:8px;align-items:center;font-size:14px;font-weight:600;cursor:pointer;user-select:none}
+.check input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+
+/* lessons */
+.lessons{display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:900px){.lessons{grid-template-columns:1fr;gap:18px}}
+.lnav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px);display:grid;gap:4px}
+@media (max-width:900px){.lnav{position:static;display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}}
+.lnav button{appearance:none;border:1px solid transparent;background:none;text-align:left;padding:10px 12px;border-radius:10px;cursor:pointer;display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;color:var(--ink)}
+@media (max-width:900px){.lnav button{flex:0 0 auto;grid-template-columns:auto auto auto;border-color:var(--line);background:var(--surface)}}
+.lnav button:hover{background:var(--surface)}
+.lnav button[aria-current="true"]{background:var(--surface);border-color:var(--line);box-shadow:var(--shadow)}
+.lnav .n{font:600 12px/1 var(--f-mono);color:var(--muted)}
+.lnav .t{font-size:14.5px;font-weight:600;line-height:1.3}
+@media (max-width:900px){.lnav .t{white-space:nowrap}}
+.lnav .ok{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--accent-ink)}
+.lnav .ok.on{background:var(--accent);border-color:var(--accent)}
+.lesson{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:30px 34px 34px;min-width:0}
+@media (max-width:520px){.lesson{padding:20px 16px 24px}}
+.lesson > header{display:grid;gap:10px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.lesson .why{font-size:15px;color:var(--muted);max-width:66ch}
+.prose{max-width:70ch}
+.prose p{margin-top:12px}
+.prose ul,.prose ol{margin:12px 0 0;padding-left:22px}
+.prose li+li{margin-top:6px}
+.prose h3+p,.prose h3+ul,.prose h3+ol{margin-top:10px}
+.prose .tbl-wrap{margin-top:14px;max-width:none}
+.prose .note{margin-top:16px}
+.formula{margin-top:12px;font:500 14.5px/1.6 var(--f-mono);background:var(--surface-2);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:pre}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px;counter-reset:f}
+.flow div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;background:var(--bg);counter-increment:f}
+.flow div::before{content:counter(f);display:block;font:600 11px/1 var(--f-mono);color:var(--accent);margin-bottom:6px}
+.lesson-end{margin-top:34px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+
+/* widgets */
+.widget{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:18px;display:grid;gap:14px;max-width:none}
+@media (max-width:520px){.widget{padding:14px}}
+.widget > .w-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.widget > .w-h h4{font-size:16px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 12px}
+.field{display:grid;gap:5px}
+.field label{font-size:13px;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 11px;font-size:15px;min-width:0}
+.field input{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.field input.text{font-family:var(--f-body)}
+.field textarea{resize:vertical;min-height:84px;line-height:1.5}
+.field.wide{grid-column:1/-1}
+.kpis{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px}
+@media (max-width:640px){.kpis{grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 12px;display:grid;gap:4px;align-content:start}
+.kpi span{font-size:12.5px;color:var(--muted);font-weight:600}
+.kpi b{font:600 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.verdict{display:flex;gap:10px;align-items:flex-start;font-size:15px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.verdict .chip{flex:0 0 auto}
+.bars{display:grid;gap:7px}
+.bar-row{display:grid;grid-template-columns:150px minmax(0,1fr) 120px;gap:10px;align-items:center;font-size:14px}
+@media (max-width:560px){.bar-row{grid-template-columns:110px minmax(0,1fr) 92px;font-size:13px}}
+.bar-row .v{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.bar-track{height:14px;background:var(--bar-track);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;background:var(--bar);border-radius:0 4px 4px 0;min-width:2px}
+.bar-row.profit .bar-fill{background:var(--good)}
+.bar-row.loss .bar-fill{background:var(--bad)}
+.ai-out{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:15px;display:grid;gap:10px}
+.ai-out ul{margin:0;padding-left:20px}
+.ai-out .score{font:700 30px/1 var(--f-mono)}
+.ai-off{font-size:14px;color:var(--muted)}
+.selfcheck{display:grid;gap:6px;font-size:14.5px}
+
+/* quiz */
+.qfilters{display:flex;gap:6px;flex-wrap:wrap}
+.qfilters button{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink)}
+.qfilters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.qlist{display:grid;gap:12px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:10px}
+.q .qh{display:flex;gap:10px;justify-content:space-between;align-items:baseline}
+.q .qt{font-weight:600;font-size:15.5px}
+.opts{display:grid;gap:6px}
+.opt{appearance:none;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 12px;cursor:pointer;font-size:14.5px;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.why-a{font-size:14px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px}
+.scorebar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.case-table td select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 9px;font-size:14px;max-width:230px}
+.case-table td.res{font-size:13.5px;min-width:220px}
+.case-table tr.okrow td{background:var(--good-soft)}
+.case-table tr.badrow td{background:var(--bad-soft)}
+.case-table .sku{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+
+/* interview */
+details.qa{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0}
+details.qa+details.qa{margin-top:8px}
+details.qa summary{cursor:pointer;padding:14px 18px;font-weight:600;list-style:none;display:flex;gap:12px}
+details.qa summary::-webkit-details-marker{display:none}
+details.qa summary::before{content:"+";font:600 16px/1.3 var(--f-mono);color:var(--accent);width:12px;flex:0 0 auto}
+details.qa[open] summary::before{content:"−"}
+details.qa .a{padding:0 18px 16px 42px;font-size:15px;display:grid;gap:8px}
+details.qa .a ul,details.qa .a ol{margin:0;padding-left:20px}
+.letter{white-space:pre-wrap;font-size:15px;line-height:1.6;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-height:120px}
+.chat{display:grid;gap:10px;max-height:560px;overflow-y:auto;padding:4px}
+.msg{max-width:88%;padding:11px 14px;border-radius:12px;font-size:15px;white-space:pre-wrap;line-height:1.55}
+.msg.hr{background:var(--surface);border:1px solid var(--line);justify-self:start;border-bottom-left-radius:4px}
+.msg.me{background:var(--accent-soft);justify-self:end;border-bottom-right-radius:4px}
+.msg .who{display:block;font:600 11px/1 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+
+/* glossary */
+.gloss-search{max-width:420px;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 14px;font-size:15px}
+.gl td:first-child{font-weight:600;white-space:nowrap}
+.gl td:nth-child(2){font-family:var(--f-mono);font-size:13.5px;color:var(--accent);white-space:nowrap}
+
+.foot{font-size:13px;color:var(--muted);padding-block:10px 40px;border-top:1px solid var(--line);margin-top:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="wrap top">
+  <div>
+    <p class="eyebrow">Учебный тренажёр · Uzum Market · Ташкент</p>
+    <h1 style="margin-top:12px">Менеджер Uzum<br>за 21 день</h1>
+    <p class="lede">Восемь уроков по пяти блокам работы менеджера маркетплейса, калькуляторы, которыми вы будете пользоваться на работе, тренажёр на данных кабинета и подготовка к собеседованию. Темп — 2–3 часа в день.</p>
+  </div>
+  <div class="label-card" aria-label="Ваш прогресс">
+    <div class="lc-head"><span class="eyebrow">Маршрут · дни</span><b id="st-days">0/21</b></div>
+    <div class="barcode" id="barcode" aria-hidden="true"></div>
+    <div class="lc-meta">
+      <span>Уроки <b id="st-lessons">0/8</b></span>
+      <span>Тест <b id="st-quiz">—</b></span>
+      <span>Кейс <b id="st-case">—</b></span>
+    </div>
+    <div class="sync" id="sync"><i></i><span>Прогресс хранится в этом браузере</span></div>
+  </div>
+</header>
+
+<div class="tabbar">
+  <nav class="wrap tabs" role="tablist" aria-label="Разделы курса">
+    <button class="tab" role="tab" id="t-route" data-tab="route" aria-selected="true">Маршрут</button>
+    <button class="tab" role="tab" id="t-lessons" data-tab="lessons" aria-selected="false">Уроки</button>
+    <button class="tab" role="tab" id="t-practice" data-tab="practice" aria-selected="false">Тренажёр</button>
+    <button class="tab" role="tab" id="t-interview" data-tab="interview" aria-selected="false">Собеседование</button>
+    <button class="tab" role="tab" id="t-glossary" data-tab="glossary" aria-selected="false">Словарь RU–UZ</button>
+  </nav>
+</div>
+
+<main class="wrap">
+
+<!-- ============ ROUTE ============ -->
+<section role="tabpanel" id="p-route" aria-labelledby="t-route">
+  <div class="sec-head">
+    <h2>Что это за работа</h2>
+    <p>Во всех восьми вакансиях — одна работа: вести магазин продавца на Uzum (часто ещё на WB, Ozon, Яндекс Маркете). Она раскладывается на пять блоков плюс цифры, которые связывают их вместе.</p>
+  </div>
+  <div class="grid-5" id="blocks"></div>
+
+  <div class="sec-head">
+    <h2>Где вы сейчас</h2>
+    <p>Требования из вакансий против того, что у вас уже есть. Правый столбец — где в курсе это закрывается.</p>
+  </div>
+  <div class="tbl-wrap"><table id="gap"></table></div>
+  <div class="note"><b>Ваш козырь — техническая сторона.</b> 188 товаров, заведённых в WooCommerce, — это та же работа с карточками: структура каталога, характеристики, описания, фото. Добавьте к этому то, что обычный менеджер не умеет: массовое редактирование карточек через Excel-шаблоны, сбор цен конкурентов, автоматический отчёт в Google Таблицах. У Uzum есть Open API для продавцов — остатки и продажи можно подтягивать в таблицу без ручного копирования. В письмах и на собеседовании делайте упор именно на это.</div>
+
+  <div class="sec-head">
+    <h2>План на 21 день</h2>
+    <p>Неделя 1 — база и цифры. Неделя 2 — практика на реальных карточках. Неделя 3 — собственный кейс с цифрами и отклики. Отмечайте дни — полоска в шапке заполняется.</p>
+  </div>
+  <div class="weeks" id="plan"></div>
+
+  <div class="sec-head">
+    <h2>Когда откликаться на каждую вакансию</h2>
+    <p>Порядок — от мягких требований к жёстким. Отклик без кейса там, где пишут «без опыта не рассматриваем», тратит шанс: второй раз резюме откроют с меньшим интересом.</p>
+  </div>
+  <div class="tbl-wrap"><table id="vac"></table></div>
+  <div class="note"><b>Эти восемь — не весь рынок.</b> На hh.uz по запросу «менеджер маркетплейсов» в Ташкенте сейчас около 55 вакансий. Типичный уровень — 5–15 млн сум или $500–1 200 в месяц, и есть вакансии без требования опыта (например, 6–10 млн сум). Проверяйте их с первой недели: там можно получить опыт в кабинете уже в октябре.</div>
+</section>
+
+<!-- ============ LESSONS ============ -->
+<section role="tabpanel" id="p-lessons" aria-labelledby="t-lessons" hidden>
+  <div class="lessons">
+    <nav class="lnav" id="lnav" aria-label="Уроки"></nav>
+    <article class="lesson" id="lesson"></article>
+  </div>
+</section>
+
+<!-- ============ PRACTICE ============ -->
+<section role="tabpanel" id="p-practice" aria-labelledby="t-practice" hidden>
+  <div class="sec-head">
+    <h2>Разбор кабинета: 7 товаров, 7 проблем</h2>
+    <p>Выгрузка за 7 дней по магазину косметики — такую таблицу вы будете смотреть каждый понедельник. У каждого товара одна главная проблема. Выберите, что делать, и нажмите «Проверить». Средние по категории: CTR ≈ 3,5%, конверсия в заказ ≈ 6%.</p>
+  </div>
+  <div>
+    <div class="tbl-wrap"><table class="case-table" id="case"></table></div>
+    <div class="row" style="margin-top:12px;justify-content:space-between">
+      <label class="check"><input type="checkbox" id="case-metrics"> Показать расчётные метрики (CTR, конверсия, дни запаса, ДРР)</label>
+      <div class="row"><span id="case-score" class="chip">Не проверено</span><button class="btn ghost small" id="case-reset">Сбросить</button><button class="btn small" id="case-check">Проверить</button></div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <h2 id="quiz-h">Тест</h2>
+    <p>Вопросы в формате собеседований. После ответа — объяснение. Цель — 85% и выше. Лучший результат сохраняется.</p>
+  </div>
+  <div class="scorebar">
+    <div class="qfilters" id="qfilters"></div>
+    <div class="row"><span class="chip acc" id="qscore">0 из 0</span><button class="btn ghost small" id="qreset">Пройти заново</button></div>
+  </div>
+  <div class="qlist" id="qlist"></div>
+</section>
+
+<!-- ============ INTERVIEW ============ -->
+<section role="tabpanel" id="p-interview" aria-labelledby="t-interview" hidden>
+  <div class="sec-head">
+    <h2>Откуда взять «результат в цифрах»</h2>
+    <p>Работодатели просят: в каком кабинете работали, сколько месяцев, какой результат в цифрах. Придумывать опыт нельзя — первый же вопрос по кабинету это вскроет. Есть четыре честных способа получить цифры за 2–4 недели.</p>
+  </div>
+  <div class="grid-5" id="routes"></div>
+
+  <div class="sec-head">
+    <h2>Пробное собеседование с ИИ</h2>
+    <p>Руководитель отдела маркетплейсов косметического дистрибьютора задаст шесть вопросов по одному, а в конце выставит оценку и скажет, пригласил бы он вас на второй этап. Отвечайте как на настоящем собеседовании.</p>
+  </div>
+  <div class="panel" id="mock">
+    <div class="chat" id="chat" aria-live="polite"></div>
+    <div id="chat-controls" style="display:grid;gap:10px;margin-top:12px">
+      <div class="field"><label for="chat-in">Ваш ответ</label><textarea id="chat-in" rows="3" placeholder="Сначала нажмите «Начать собеседование»"></textarea></div>
+      <div class="row"><button class="btn" id="chat-start">Начать собеседование</button><button class="btn" id="chat-send" hidden>Отправить ответ</button><button class="btn ghost small" id="chat-stop" hidden>Остановить</button><button class="btn ghost small" id="chat-reset" hidden>Начать заново</button></div>
+    </div>
+    <p class="ai-off" id="chat-off" hidden>Пробное собеседование работает, когда страница открыта на claude.ai: ответы ИИ идут из вашего аккаунта Claude. Пока — отвечайте на вопросы ниже вслух или письменно и сверяйтесь с разбором.</p>
+  </div>
+
+  <div class="sec-head">
+    <h2>13 вопросов, которые зададут</h2>
+    <p>Сначала ответьте сами, потом откройте разбор. Хороший ответ — это порядок действий и цифры, а не общие слова.</p>
+  </div>
+  <div id="qa"></div>
+
+  <div class="sec-head">
+    <h2>Сопроводительное письмо</h2>
+    <p>Шаблон отвечает ровно на то, что просят в вакансиях: кабинет, срок, результат в цифрах. Поля заполнены примером — замените своими данными.</p>
+  </div>
+  <div class="two">
+    <div class="panel" style="display:grid;gap:12px;align-content:start">
+      <div class="fields">
+        <div class="field"><label for="cl-name">Имя</label><input class="text" id="cl-name" value="Фаррух"></div>
+        <div class="field"><label for="cl-vac">Вакансия</label><select id="cl-vac"></select></div>
+        <div class="field wide"><label for="cl-exp">Опыт с маркетплейсом (кабинет, срок, объём)</label><textarea id="cl-exp" rows="3">[ПРИМЕР — замените после дня 20] С октября веду кабинет продавца Uzum для магазина уходовой косметики (18 SKU, FBO): карточки, остатки, ответы на отзывы, реклама.</textarea></div>
+        <div class="field wide"><label for="cl-res">Результат в цифрах</label><textarea id="cl-res" rows="3">[ПРИМЕР — только ваши реальные цифры] За 3 недели: CTR главного товара 1,1% → 2,9% после замены фото и названия; ответил на 64 отзыва; снизил ставки у 2 товаров с ДРР выше маржи.</textarea></div>
+        <div class="field wide"><label for="cl-plus">Что ещё умеете</label><textarea id="cl-plus" rows="3">Завёл 188 товаров в интернет-магазин на WooCommerce (названия, описания, характеристики, фото); SEO сайтов; массовое редактирование через Excel; автоматизирую отчёты в Google Таблицах.</textarea></div>
+      </div>
+      <div class="row"><button class="btn" id="cl-copy">Скопировать письмо</button><button class="btn ghost" id="cl-ai" hidden>Улучшить с ИИ</button><span class="muted" id="cl-msg" style="font-size:14px"></span></div>
+    </div>
+    <div style="display:grid;gap:8px;align-content:start">
+      <p class="eyebrow">Предпросмотр</p>
+      <div class="letter" id="cl-out"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GLOSSARY ============ -->
+<section role="tabpanel" id="p-glossary" aria-labelledby="t-glossary" hidden>
+  <div class="sec-head">
+    <h2>Словарь менеджера: русский — узбекский</h2>
+    <p>Кабинет Uzum, отзывы покупателей и половина рабочих чатов — на узбекском. Термины, которые встретятся в первую же неделю. Прочерк — название раздела или документа в интерфейсе: узбекский вариант сверяйте в кабинете, переключив язык.</p>
+  </div>
+  <input class="gloss-search" id="gq" type="search" placeholder="Поиск: остаток, qoldiq, ДРР…" aria-label="Поиск по словарю">
+  <div class="tbl-wrap"><table class="gl" id="gl"></table></div>
+</section>
+
+<p class="foot">Неофициальный учебный тренажёр, не связан с Uzum. Комиссии, тарифы и правила площадки меняются — перед работой сверяйте цифры с разделами кабинета продавца и справкой Uzum.</p>
+</main>
+
+<script>
+/* ================= DATA ================= */
+const BLOCKS=[
+  {tag:'Блок 1',t:'Карточки и контент',p:'Название, описание, характеристики, фото и инфографика. SEO внутри поиска Uzum, исправление ошибок модерации.',l:'l2'},
+  {tag:'Блок 2',t:'Остатки и поставки',p:'Чтобы товар не кончился. Схемы FBO и FBS, накладные, приёмка на складе.',l:'l3'},
+  {tag:'Блок 3',t:'Реклама',p:'Кампании внутри площадки, ставки и бюджет. Отключать то, что не окупается: ДРР, ROAS, ROI.',l:'l5'},
+  {tag:'Блок 4',t:'Цены и акции',p:'Скидки в рамках правил компании, акции маркетплейса, мониторинг цен конкурентов.',l:'l6'},
+  {tag:'Блок 5',t:'Отзывы и рейтинг',p:'Ответы на отзывы и вопросы, работа с низким рейтингом, снижение возвратов.',l:'l7'},
+  {tag:'Связка',t:'Аналитика и юнит-экономика',p:'Конверсия, CTR, средний чек, оборачиваемость. Себестоимость, логистика, комиссия, маржа.',l:'l4'}
+];
+const GAP=[
+  ['Опыт в кабинете продавца Uzum / WB','Почти везде — главное','Нет','<button class="linkbtn" data-open="l1">Урок 1</button>, дни 1 и 13–20: реальный продавец'],
+  ['Карточки и SEO','Везде','Есть база: 188 товаров, SEO сайтов','<button class="linkbtn" data-open="l2">Урок 2</button> — перенести на поиск Uzum'],
+  ['Юнит-экономика','«Под ключ», косметика','Нет','<button class="linkbtn" data-open="l4">Урок 4</button> + калькулятор'],
+  ['Реклама, ROI / ROAS','Косметика, команда Ильи','Нет','<button class="linkbtn" data-open="l5">Урок 5</button> + калькулятор ДРР'],
+  ['Поставки FBO / FBS','Косметика, Дары Беларуси','Нет','<button class="linkbtn" data-open="l3">Урок 3</button> + расчёт поставки'],
+  ['Excel / Google Таблицы','Везде','Базовый','Дни 5 и 11 — два рабочих шаблона'],
+  ['Отзывы и рейтинг','Везде','Нет','<button class="linkbtn" data-open="l7">Урок 7</button> + тренажёр ответов'],
+  ['Узбекский C2','COURSTRAVELACADEMY','—','<button class="linkbtn" data-go="glossary">Словарь RU–UZ</button>, шаблоны ответов на узбекском'],
+  ['Результат в цифрах','В каждом письме','Нет','Дни 13–20: собственный кейс «было → стало»']
+];
+const VACS=[
+  {n:'COURSTRAVELACADEMY (Новза), 2 вакансии',pay:'5–15 млн + бонусы',exp:'Опыт с Uzum или любыми маркетплейсами; узбекский C2',when:'День 14+ — если узбекский свободный',c:'good'},
+  {n:'Дары Беларуси',pay:'от 5 млн, офис',exp:'1–3 года, несколько площадок',when:'День 19–21 — с аудитами и первым кейсом',c:'warn'},
+  {n:'ALMAZBUR (оборудование для бурения)',pay:'от 3 млн, офис',exp:'1–3 года, 4 площадки',when:'День 19–21 — упор на карточки сложного товара',c:'warn'},
+  {n:'Дистрибьютор косметики',pay:'6–10 млн + бонус, офис 6/1',exp:'От года в кабинете Uzum/WB, результат в цифрах',when:'После 1–2 месяцев реального кейса',c:'bad'},
+  {n:'Запуск проекта под ключ (аккаунт-менеджер)',pay:'от 5 млн, удалённо',exp:'Вести с нуля: регистрация, юнит-экономика, ROI',when:'После 2–3 месяцев, когда запустите магазин сами',c:'bad'},
+  {n:'Команда Ильи (бренды с WB и Ozon)',pay:'550–1 200 $, удалённо',exp:'От года на Uzum, «без опыта не рассматриваем»',when:'Через 6–12 месяцев работы',c:'bad'},
+  {n:'PHARMUS',pay:'не указана, офис',exp:'Успешный опыт именно с Uzum',when:'Через 6–12 месяцев работы',c:'bad'}
+];
+const PLAN=[
+  {w:'Неделя 1',t:'База и цифры',days:[
+    {t:'Как устроен Uzum',l:'l1',tasks:['Урок 1 целиком','Пройти путь покупателя в приложении Uzum Market: поиск → карточка → корзина → пункт выдачи','Прочитать в инструкции продавца (seller.uzum.uz/manual) разделы о старте работы, тарифах и схемах работы','Подписаться на канал продавцов t.me/MarketplaceUzum, записаться на бесплатный Seller Start Day в академии']},
+    {t:'Карточка и поиск',l:'l2',tasks:['Урок 2: название, ключевые слова, фото','Выбрать категорию (для первой вакансии — уходовая косметика) и разобрать топ-10 карточек: формула названия, сколько фото, что на инфографике']},
+    {t:'Своя карточка',l:'l2',tasks:['Написать карточку одного товара на русском и узбекском','Проверить её ИИ в уроке 2 и доработать до 8/10','Собрать 30 ключевых запросов из подсказок поиска Uzum']},
+    {t:'Юнит-экономика',l:'l4',tasks:['Урок 4 и калькулятор','Посчитать 3 товара из выбранной категории: цены — с Uzum, закупку — оценить по оптовым сайтам','Найти для каждого максимальную ДРР, при которой товар ещё в плюсе']},
+    {t:'Остатки и поставки',l:'l3',tasks:['Урок 3 и калькулятор поставки','Сделать Google Таблицу «Остатки»: SKU, остаток, в пути, продажи/день, дней хватит, точка заказа, заказать']},
+    {t:'Реклама',l:'l5',tasks:['Урок 5 и калькулятор ДРР','Решить три кейса урока: масштабировать, оптимизировать или выключить']},
+    {t:'Контрольная точка',l:null,go:'practice',tasks:['Тест по урокам 1–5 — цель 80%+','Повторить темы, где были ошибки']}
+  ]},
+  {w:'Неделя 2',t:'Практика как на работе',days:[
+    {t:'Цены и акции',l:'l6',tasks:['Урок 6 и калькулятор акции','Таблица мониторинга: 3 ваших товара × 5 конкурентов — цена, скидка, рейтинг, число отзывов']},
+    {t:'Отзывы и рейтинг',l:'l7',tasks:['Урок 7','Ответить на 10 отзывов в тренажёре: 5 на русском, 5 на узбекском']},
+    {t:'Аналитика кабинета',l:'l8',tasks:['Урок 8','Разбор кабинета в тренажёре — 7 из 7']},
+    {t:'Еженедельный отчёт',l:'l8',tasks:['Собрать шаблон отчёта руководителю в Google Таблицах: воронка, ДРР, остатки, ABC','Заполнить его данными из разбора кабинета']},
+    {t:'Аудит трёх карточек',l:'l2',tasks:['Выбрать 3 реальные карточки на Uzum со слабым фото или названием','Оформить аудит: что не так → что исправить → какой метрики ждём. Это первая работа в портфолио']},
+    {t:'Найти продавца',l:null,go:'interview',tasks:['Написать 10–15 небольшим продавцам (знакомые, Telegram-чаты продавцов Uzum): бесплатный аудит + ведение 3–4 недели за право показать цифры','Приложить аудит из дня 12']},
+    {t:'Контрольная точка',l:null,go:'practice',tasks:['Полный тест — цель 85%+','Разбор кабинета без подсказки метрик']}
+  ]},
+  {w:'Неделя 3',t:'Кейс и выход на рынок',days:[
+    {t:'Точка «было»',l:'l8',tasks:['Получить доступ к кабинету продавца (или открыть свой магазин)','Снять метрики за 14 дней по каждому SKU: показы, CTR, конверсия, заказы, остаток, ДРР']},
+    {t:'Правки карточек',l:'l2',tasks:['Исправить 3–5 карточек: главное фото, название, характеристики','Записать дату и что именно поменяли']},
+    {t:'Резюме и письмо',l:null,go:'interview',tasks:['Резюме на hh.uz: Uzum, карточки, юнит-экономика, Google Таблицы','Собрать письмо в конструкторе']},
+    {t:'Пробное собеседование',l:null,go:'interview',tasks:['Пройти пробное собеседование с ИИ дважды','Переписать ответы, за которые снизили оценку']},
+    {t:'Первые отклики',l:null,go:'route',tasks:['Откликнуться туда, где требования мягче (см. таблицу внизу)','Параллельно — «ассистент / стажёр менеджера маркетплейсов»']},
+    {t:'Точка «стало»',l:'l8',tasks:['Снять те же метрики через 7 дней после правок','Оформить кейс: было → что сделал → стало, с цифрами']},
+    {t:'Итог',l:null,go:'practice',tasks:['Повторный полный тест','Отклики с кейсом на вакансии из второй строки таблицы','План на 30 дней: продолжать вести продавца, копить месяцы опыта']}
+  ]}
+];
+const ROUTES=[
+  {tag:'Быстрее всего',t:'Помощь продавцу за кейс',p:'На Uzum больше 18 000 продавцов, 90% из них — малый бизнес, и им не хватает рук на отзывы и карточки. Предложите 3–4 недели бесплатно или за символическую сумму в обмен на доступ к кабинету и право показать цифры.'},
+  {tag:'Свой магазин',t:'Открыть кабинет самому',p:'10–20 единиц одного недорогого товара на FBO. Дорого по времени, но даёт весь цикл: регистрация, карточка, поставка, реклама, выплаты. Для вакансии «под ключ» — лучший аргумент.'},
+  {tag:'Портфолио',t:'Аудиты чужих карточек',p:'Разбор 3–5 реальных карточек: что не так, что исправить, какой рост ждём. Цифр продаж не даёт, но показывает, как вы думаете.'},
+  {tag:'Вход в профессию',t:'Ассистент менеджера',p:'Позиции «ассистент / стажёр / контент-менеджер маркетплейсов» берут без опыта. Через 3–6 месяцев у вас «опыт в кабинете» с цифрами.'}
+];
+const QA=[
+  {q:'Продажи товара упали на 40% за неделю. Ваши действия?',a:'<p>Иду по цепочке от простого к сложному:</p><ol><li><b>Остаток</b> — не закончился ли товар на складе и не скрыта ли карточка (модерация, блокировка).</li><li><b>Цена</b> — не поднялась ли у нас и не опустил ли цену конкурент; не закончилась ли акция.</li><li><b>Рейтинг</b> — нет ли свежих негативных отзывов.</li><li><b>Реклама</b> — не кончился ли бюджет, не перебили ли ставку.</li><li><b>Воронка</b> — где просело: показы (позиции), CTR (фото, цена в выдаче) или конверсия (карточка, отзывы).</li></ol><p>Дальше — одно действие на найденную причину и замер через 3–7 дней.</p>'},
+  {q:'Как понять, окупается ли реклама?',a:'<p>Сравниваю ДРР кампании с маржой товара до рекламы. ДРР = расход ÷ выручка с рекламы × 100%. Если маржа до рекламы 30%, а ДРР 12% — каждый рекламный заказ приносит около 18% прибыли. Если ДРР 35% — реклама работает в минус: снижаю ставку, улучшаю карточку или выключаю.</p><p>Смотрю не только прямые заказы: реклама поднимает товар в органике, поэтому оцениваю ещё и общие продажи SKU за период.</p>'},
+  {q:'Чем FBO отличается от FBS и что выбрать?',a:'<p><b>FBO</b> — товар лежит на складе Uzum, площадка собирает и доставляет. Быстрее доставка, выше позиции в выдаче, меньше работы продавцу — но платите за логистику и хранение и замораживаете деньги в поставке.</p><p><b>FBS</b> — товар у продавца, он собирает заказы, Uzum доставляет. Подходит для крупногабарита, широкого ассортимента с редким спросом, теста новинок.</p><p>Обычно: хиты — на FBO, «длинный хвост» и тесты — на FBS.</p>'},
+  {q:'Как рассчитать, сколько товара отправить на склад?',a:'<p>Беру средние продажи в день за последние 14 дней, срок поставки (от заказа поставщику до приёмки на складе) и страховой запас.</p><div class="formula">Точка заказа = продажи/день × (срок поставки + страховой запас)\nЗаказать = продажи/день × (срок поставки + период + страховой запас) − (остаток + в пути)</div><p>Поправка на сезон и акции: перед распродажей увеличиваю план.</p>'},
+  {q:'Показов много, CTR низкий. Что делать?',a:'<p>Покупатель видит товар в выдаче, но не кликает. Значит, проблема в том, что видно в выдаче: главное фото, название, цена и зачёркнутая цена, рейтинг и число отзывов. Первым делом — главное фото: крупно товар, чистый фон, одно главное преимущество. Сравниваю со своей выдачей: чем мы хуже соседей справа и слева.</p>'},
+  {q:'CTR высокий, а заказов мало. Что делать?',a:'<p>Покупатель зашёл в карточку и ушёл. Проверяю: цену относительно конкурентов, отзывы и рейтинг, полноту характеристик и размерной сетки, фото «в жизни», срок доставки. Часто причина — ответы на вопросы, которых нет в карточке: состав, размеры, совместимость.</p>'},
+  {q:'Покупатель оставил 1 звезду: «пришёл брак». Ваш ответ?',a:'<p>Отвечаю в течение суток, без спора: извиняюсь, объясняю, как оформить возврат через приложение, говорю, что проверим партию. Не прошу связаться по телефону вне площадки. Параллельно передаю информацию о браке закупке и проверяю, повторяется ли жалоба в других отзывах.</p>'},
+  {q:'Какие ключевые слова вы используете для карточки?',a:'<p>Подсказки в поиске Uzum, названия и характеристики лидеров категории, слова покупателей из отзывов и вопросов. Обязательно — на русском и узбекском, в латинице и кириллице, с разговорными вариантами. Главный запрос — в начало названия, остальные — в характеристики и описание, без переспама.</p>'},
+  {q:'Участвовать ли в акции Uzum со скидкой 20%?',a:'<p>Считаю прибыль на единицу до и во время акции. Если было 30 000 сум, а в акции станет 10 000, продажи должны вырасти в 3 раза, чтобы прибыль не упала. Смотрю, реально ли это по прошлым акциям, хватит ли остатка и не уйдёт ли товар в минус. Иногда участвую ради позиций и отзывов — но осознанно, с цифрой «сколько готовы потерять».</p>'},
+  {q:'Как вы подготовите магазин к акции 11.11?',a:'<ol><li><b>За 4 недели</b> — ABC-анализ: какие товары группы A и B участвуют. Для каждого считаю прибыль в акции и нужный рост продаж.</li><li><b>За 3 недели</b> — план поставки с запасом под рост продаж по прошлым акциям. Таймслот бронирую заранее и везу вовремя: за нарушение таймслота штраф.</li><li><b>За 2 недели</b> — обновляю главные фото и названия, отвечаю на все отзывы, закрываю вопросы в карточках.</li><li><b>За неделю</b> — включаю рекламу на товары-участники, чтобы подняться в выдаче до старта.</li><li><b>Во время акции</b> — каждый день остатки, ДРР, цены конкурентов.</li><li><b>После</b> — итог: выручка, прибыль, что сработало, остатки после акции.</li></ol>'},
+  {q:'Какой отчёт вы будете сдавать руководителю каждую неделю?',a:'<ul><li>Выручка, заказы, средний чек — к прошлой неделе</li><li>Воронка по топ-SKU: показы → CTR → конверсия</li><li>Реклама: расход, ДРР по кампаниям, что выключили</li><li>Остатки: что закончится в ближайшие 14 дней, план поставки</li><li>Рейтинг и отзывы: новые негативные и что с ними сделали</li><li>План на следующую неделю: 3–5 конкретных действий</li></ul>'},
+  {q:'Что такое юнит-экономика и зачем её считать?',a:'<p>Расчёт прибыли с одной проданной единицы: цена минус себестоимость, комиссия Uzum, логистика, налог, реклама и потери на возвратах. Без неё нельзя решать, давать ли скидку, сколько тратить на рекламу и стоит ли вообще продавать товар.</p>'},
+  {q:'Какой у вас опыт и результат в цифрах?',a:'<p>Отвечаете честно по формуле: <b>где → сколько → что сделал → что изменилось</b>. Например: «3 недели веду кабинет Uzum небольшого магазина косметики, 18 SKU. Заменил главные фото и названия у 5 товаров — CTR вырос с 1,1% до 2,9%. Коммерческого опыта больше года у меня нет, но есть база: 188 товаров в интернет-магазине и навыки автоматизации отчётов».</p><p>Честность плюс конкретика убеждает сильнее, чем расплывчатое «работал с маркетплейсами».</p>'}
+];
+const QUIZ=[
+  {m:'l1',q:'Что означает модель FBO?',a:['Товар хранится на складе маркетплейса, площадка собирает и доставляет заказ','Продавец хранит товар и сам доставляет покупателю','Оплата рекламы за каждый заказ','Отчёт о продажах за месяц'],c:0,w:'FBO — Fulfillment by Operator: товар лежит на складе Uzum, продавцу нужно только вовремя поставлять.'},
+  {m:'l1',q:'При модели FBS продавец…',a:['Только создаёт карточку','Хранит товар у себя и собирает заказ, а доставку делает маркетплейс','Платит за хранение на складе Uzum','Не может участвовать в акциях'],c:1,w:'FBS — Fulfillment by Seller: склад у продавца, сборка — у продавца, доставка покупателю — площадки.'},
+  {m:'l1',q:'Из чего складывается выплата продавцу за проданный товар?',a:['Цена продажи целиком','Цена минус комиссия площадки, логистика и прочие услуги (хранение, штрафы, реклама)','Себестоимость плюс наценка','Только комиссия'],c:1,w:'Площадка удерживает свою комиссию и стоимость услуг — поэтому в юнит-экономике всё считают от цены продажи.'},
+  {m:'l2',q:'Какое название карточки лучше?',a:['ХИТ ПРОДАЖ!!! Крем СКИДКА','Крем для лица увлажняющий Brand с гиалуроновой кислотой, 50 мл','Крем','Лучший крем в Узбекистане'],c:1,w:'Формула: тип товара + бренд + ключевая характеристика + объём. Капс, «хит», «лучший» режет модерация и не ищет поиск.'},
+  {m:'l2',q:'Показов много, CTR низкий. Что исправлять первым?',a:['Описание в карточке','Главное фото, название и цену в выдаче','Характеристики','Ответы на отзывы'],c:1,w:'CTR зависит от того, что покупатель видит в выдаче до клика. Описание он ещё не видел.'},
+  {m:'l2',q:'Где брать ключевые слова для карточки на Uzum?',a:['Только из Google Trends','Из подсказок поиска Uzum, карточек лидеров и слов покупателей в отзывах — на русском и узбекском','Придумать самому','Скопировать описание конкурента целиком'],c:1,w:'Работает внутренний поиск площадки, поэтому источник — его подсказки и язык реальных покупателей. Копировать чужой текст нельзя.'},
+  {m:'l2',q:'Какие фото примет Uzum?',a:['Горизонтальные 16:9 любого размера','Вертикальные 3:4, от 750×1000 px, товар занимает больше половины кадра','Квадратные 500×500','Любые, модерация фото не проверяет'],c:1,w:'Требования Uzum: JPG, PNG или WebP, 3:4, от 750×1000 px, до 5 МБ, однотонный фон.'},
+  {m:'l4',q:'Как с июня 2026 года Uzum считает логистический сбор?',a:['Фиксированно 8 000 сум за любой товар','По литражу упаковки: 5 250 сум до 1 л и 250 сум за каждый следующий литр, максимум 50 000','Процент от цены','По весу в килограммах'],c:1,w:'Поэтому важно указать габариты правильно: без них спишут максимум, 50 000 сум.'},
+  {m:'l2',q:'Зачем заполнять все характеристики, если есть описание?',a:['Это не нужно','По характеристикам работают фильтры: без них товар выпадает из отфильтрованной выдачи','Чтобы карточка была длиннее','Только ради модерации'],c:1,w:'Покупатель ставит фильтр «объём 50 мл» — товар без этой характеристики не покажется.'},
+  {m:'l3',q:'Продажи 12 шт/день, остаток 90 шт, поставка занимает 6 дней. Что делать?',a:['Ничего, запаса хватит на месяц','Заказывать поставку сейчас: запаса на 7,5 дня, а поставка — 6 дней плюс страховой запас','Выключить рекламу навсегда','Поднять цену в 2 раза'],c:1,w:'90 ÷ 12 = 7,5 дня. Точка заказа = 12 × (6 + 5) = 132 шт — остаток уже ниже.'},
+  {m:'l3',q:'Когда хранение на складе Uzum становится платным?',a:['С первого дня','Когда оборачиваемость товара больше 60 дней','Только для одежды','Никогда'],c:1,w:'До 60 дней оборачиваемости хранение бесплатное, дальше — плата за литр в день, и она растёт после 180 и 360 дней.'},
+  {m:'l3',q:'Зачем нужен страховой запас?',a:['Чтобы платить больше за хранение','Чтобы покрыть задержку поставки или приёмки и всплеск спроса','Для участия в акциях','Его требует налоговая'],c:1,w:'Поставка может задержаться, приёмка — затянуться, спрос — вырасти. Страховой запас держит товар в продаже.'},
+  {m:'l3',q:'Чем опасно, если хит закончился на складе на неделю?',a:['Ничем, покупатели подождут','Потерей продаж и позиций в поиске — после возврата товар придётся снова разгонять','Штрафом от налоговой','Удалением бренда'],c:1,w:'Товар без остатка выпадает из выдачи, накопленные позиции теряются.'},
+  {m:'l4',q:'Цена 100 000, комиссия 20%, логистика 8 000, налог 4%, себестоимость 40 000. Прибыль до рекламы?',a:['60 000','28 000','32 000','40 000'],c:1,w:'100 000 − 20 000 − 8 000 − 4 000 − 40 000 = 28 000 сум, маржа 28%.'},
+  {m:'l4',q:'ROI товара — это…',a:['Выручка ÷ заказы','Прибыль ÷ вложения в товар (себестоимость) × 100%','Расход на рекламу ÷ выручка','Показы ÷ клики'],c:1,w:'ROI показывает, сколько прибыли приносит каждый вложенный сум.'},
+  {m:'l4',q:'Что обычно не включают в юнит-экономику одной единицы?',a:['Комиссию площадки','Логистику','Аренду офиса и зарплату менеджера — это постоянные расходы, их считают отдельно','Себестоимость'],c:2,w:'Юнит-экономика — переменные расходы на единицу. Постоянные вычитают из общей прибыли за месяц.'},
+  {m:'l5',q:'Расход на рекламу 500 000, выручка с рекламы 2 500 000. ДРР?',a:['5%','20%','50%','250%'],c:1,w:'ДРР = 500 000 ÷ 2 500 000 = 20%. ROAS = 5.'},
+  {m:'l5',q:'Маржа до рекламы 22%, ДРР кампании 30%. Что это значит?',a:['Всё отлично','Каждый рекламный заказ убыточен: снизить ставку, улучшить карточку или выключить','Нужно удвоить бюджет','ДРР и маржа не связаны'],c:1,w:'Реклама съедает 30% выручки при марже 22% — минус 8% с каждого рекламного заказа.'},
+  {m:'l5',q:'«Буст заказов» на Uzum — это оплата…',a:['За 1 000 показов','За клики','За заказ — процент от цены','Фиксированная в месяц'],c:2,w:'«Буст заказов» — модель CPO: процент от цены списывается после того, как покупатель получил товар. «Буст в ТОП» — оплата за 1 000 показов.'},
+  {m:'l5',q:'Ставка «Буста заказов» — 18% от цены, маржа товара до рекламы — 15%. Что происходит?',a:['Всё в порядке, реклама платится только за заказы','Каждый рекламный заказ убыточен на 3% цены','Uzum вернёт разницу','Нужно поднять ставку'],c:1,w:'Оплата за заказ не гарантирует прибыль: если ставка выше маржи, каждый рекламный заказ в минусе.'},
+  {m:'l5',q:'Когда увеличивать рекламный бюджет?',a:['Когда ДРР заметно ниже маржи, остатка хватает, а карточка конвертит не хуже средней','Всегда, чем больше — тем лучше','Когда товар заканчивается','Когда рейтинг ниже 4'],c:0,w:'Масштабировать стоит окупаемое и обеспеченное остатком. Реклама на карточку с плохой конверсией сливает бюджет.'},
+  {m:'l6',q:'Акция −20%: прибыль с единицы падает с 30 000 до 10 000. Во сколько раз должны вырасти продажи, чтобы прибыль не упала?',a:['В 1,2 раза','В 2 раза','В 3 раза','Не должны расти'],c:2,w:'30 000 ÷ 10 000 = 3. Если по прошлым акциям рост был меньше — участвуете ради позиций, но в убыток.'},
+  {m:'l6',q:'Конкурент снизил цену на 15%. Первое действие?',a:['Сразу снизить на 20%','Проверить свою юнит-экономику и предел скидки, сравнить рейтинг, отзывы и доставку','Написать конкуренту','Выключить карточку'],c:1,w:'Демпинг вслепую уводит в минус. Сначала — сколько можете себе позволить и в чём ещё можете выиграть.'},
+  {m:'l7',q:'Как правильно ответить на отзыв «пришёл с трещиной»?',a:['Написать, что покупатель сам разбил','Не отвечать','Извиниться, объяснить возврат через приложение, сообщить, что партию проверят','Дать личный номер телефона'],c:2,w:'Ответ читает не только автор, но и все будущие покупатели. Спор и контакты вне площадки — ошибка.'},
+  {m:'l7',q:'Рейтинг товара упал с 4,8 до 4,1. Что сделать первым?',a:['Заказать фейковые отзывы','Прочитать свежие негативные отзывы и найти повторяющуюся причину','Поднять цену','Удалить карточку и создать заново'],c:1,w:'Нужна причина: брак партии, размер, несоответствие фото. Накрутка отзывов запрещена правилами и ведёт к блокировке.'},
+  {m:'l8',q:'CTR считается как…',a:['Заказы ÷ показы','Переходы в карточку ÷ показы × 100%','Выручка ÷ расход','Заказы ÷ переходы'],c:1,w:'CTR — доля показов, после которых покупатель открыл карточку.'},
+  {m:'l8',q:'Оборачиваемость товара — 120 дней. Что это значит?',a:['Товар продаётся очень быстро','Запаса хватит на 4 месяца: деньги заморожены, хранение дорожает — не допоставлять, стимулировать продажи','Товар кончится завтра','Это норма для любого товара'],c:1,w:'Оборачиваемость в днях = остаток ÷ продажи в день. На Uzum после 60 дней оборачиваемости хранение становится платным — держите 30–60 дней.'},
+  {m:'l8',q:'ABC-анализ: товары группы A — это…',a:['Самые дешёвые','Небольшая часть SKU, которая даёт около 80% выручки — им приоритет в остатках и рекламе','Новинки','Товары с плохим рейтингом'],c:1,w:'Группа A — первая в очереди на поставку и рекламный бюджет. Потеря её остатка бьёт по всей выручке.'}
+];
+const CASE_OPTS=['Главное фото и название (CTR)','Цена выше рынка','Рейтинг и отзывы','Срочно пополнить остаток','Снизить ставку / выключить рекламу','Масштабировать рекламу','Затоварка — распродать'];
+const CASE=[
+  {sku:'SKU-1041',n:'Крем SPF 50, 50 мл',imp:42000,clk:420,ord:25,price:119000,comp:115000,rt:4.8,stock:120,spd:3.6,ads:150000,adr:1071000,mg:32,ans:0,why:'CTR 1,0% при среднем 3,5% — покупатели видят товар, но не кликают. Конверсия нормальная (6%), значит проблема в выдаче: фото и название.'},
+  {sku:'SKU-2207',n:'Шампунь 500 мл',imp:30000,clk:1260,ord:13,price:89000,comp:68000,rt:4.7,stock:70,spd:1.9,ads:140000,adr:1157000,mg:30,ans:1,why:'CTR хороший (4,2%), а конверсия 1% — в карточку заходят и уходят. Цена на 31% выше медианы конкурентов при хорошем рейтинге.'},
+  {sku:'SKU-3318',n:'Сыворотка с ниацинамидом',imp:25000,clk:900,ord:63,price:99000,comp:101000,rt:4.9,stock:16,spd:9,ads:180000,adr:1800000,mg:34,ans:3,why:'Хит с отличными метриками, но остатка на 1,8 дня. Если закончится — потеряете позиции. Поставка — сегодня.'},
+  {sku:'SKU-4450',n:'Маска для волос',imp:38000,clk:1330,ord:84,price:75000,comp:76000,rt:4.7,stock:400,spd:12,ads:1260000,adr:3150000,mg:26,ans:4,why:'ДРР 40% при марже 26% — каждый рекламный заказ в минусе на 14% выручки. Карточка сама по себе в порядке.'},
+  {sku:'SKU-5102',n:'Бальзам для губ',imp:20000,clk:760,ord:53,price:39000,comp:42000,rt:4.9,stock:260,spd:7.6,ads:120000,adr:1404000,mg:36,ans:5,why:'ДРР 8,5% при марже 36%, конверсия 7%, запаса на 34 дня. Реклама прибыльна и есть что продавать — увеличивать бюджет.'},
+  {sku:'SKU-6093',n:'Гель для душа, 1 л',imp:12000,clk:420,ord:21,price:59000,comp:57000,rt:4.6,stock:950,spd:3,ads:60000,adr:540000,mg:29,ans:6,why:'950 шт при продажах 3 в день — запаса на 317 дней. После 60 дней оборачиваемости Uzum берёт плату за хранение, после 180 — дороже. Акция, скидка, не допоставлять.'},
+  {sku:'SKU-7215',n:'Тушь для ресниц',imp:28000,clk:1010,ord:30,price:65000,comp:66000,rt:3.6,stock:150,spd:4.3,ads:130000,adr:975000,mg:31,ans:2,why:'Рейтинг 3,6 — ниже порога доверия. Свежие отзывы: «засохла», «осыпается». Разобраться с партией и поставщиком, ответить на негатив.'}
+];
+const REVIEWS=[
+  {s:1,lang:'RU',t:'Крем пришёл со вскрытой упаковкой, пользоваться страшно. Разочарована.'},
+  {s:2,lang:'RU',t:'Размер маломерит, заказала M — как S. Возвращать неудобно.'},
+  {s:5,lang:'UZ',t:'Juda yaxshi krem, terini quritmaydi. Rahmat!'},
+  {s:3,lang:'RU',t:'Товар нормальный, но в описании не указан объём, пришлось спрашивать.'},
+  {s:1,lang:'UZ',t:'Rasmdagidek emas, rangi boshqacha keldi.'}
+];
+const GLOSS=[
+  ['Товар','Mahsulot','Единица ассортимента в кабинете'],
+  ['Карточка товара','Mahsulot kartochkasi','Страница товара: название, фото, описание, характеристики'],
+  ['Название','Nomi','Первое, что индексирует поиск'],
+  ['Описание','Tavsif','Текст о пользе, применении и составе'],
+  ['Характеристики','Xususiyatlar','Поля, по которым работают фильтры'],
+  ['Фото','Rasm / surat','Главное фото определяет CTR'],
+  ['Заказ','Buyurtma','—'],
+  ['Покупатель','Xaridor','—'],
+  ['Продавец','Sotuvchi','—'],
+  ['Склад','Ombor','FBO — склад Uzum, FBS — склад продавца'],
+  ['Остаток','Qoldiq','Сколько штук доступно к продаже'],
+  ['Поставка','Yetkazib berish / ta\'minot','Отгрузка товара на склад площадки'],
+  ['Накладная','Yuk xati (nakladnoy)','Документ поставки со списком SKU и количеством'],
+  ['Штрихкод','Shtrix-kod','Код для приёмки и учёта каждой единицы'],
+  ['Упаковка','Qadoq','Требования к упаковке проверяют на приёмке'],
+  ['Пункт выдачи','Topshirish punkti','Куда покупатель приходит за заказом'],
+  ['Доставка','Yetkazib berish','—'],
+  ['Возврат','Qaytarish','Покупатель вернул товар или не забрал'],
+  ['Брак, дефект','Nuqson','Частая причина негатива'],
+  ['Отзыв','Sharh / fikr','Отвечать в течение суток'],
+  ['Вопрос покупателя','Savol','Отвечать до покупки — это конверсия'],
+  ['Рейтинг','Reyting','Средняя оценка товара'],
+  ['Цена','Narx','—'],
+  ['Скидка','Chegirma','—'],
+  ['Акция','Aksiya','Акции площадки: распродажи, праздники'],
+  ['Себестоимость','Tannarx','Закупка + доставка до склада + упаковка'],
+  ['Выручка','Tushum','Деньги от продаж до вычетов'],
+  ['Прибыль','Foyda','Выручка минус все расходы'],
+  ['Расход','Xarajat','—'],
+  ['Комиссия','Komissiya','Процент площадки с каждой продажи'],
+  ['Выплата','To\'lov','Перечисление денег продавцу'],
+  ['Отчёт','Hisobot','Еженедельный отчёт руководителю'],
+  ['Продажи','Sotuvlar','—'],
+  ['Реклама','Reklama','Продвижение внутри площадки'],
+  ['Рассрочка','Muddatli to\'lov / Nasiya','Покупка в рассрочку — важна для дорогих товаров'],
+  ['CTR','CTR','Переходы ÷ показы × 100%'],
+  ['Конверсия','Konversiya','Заказы ÷ переходы × 100%'],
+  ['ДРР','ДРР (DRR)','Доля рекламных расходов: расход ÷ выручка с рекламы × 100%'],
+  ['ROAS','ROAS','Выручка с рекламы ÷ расход'],
+  ['ROI','ROI','Прибыль ÷ вложения × 100%'],
+  ['SKU','SKU / artikul','Уникальная позиция товара (цвет, размер — отдельные SKU)'],
+  ['FBO','FBO','Товар на складе Uzum'],
+  ['FBS','FBS','Товар у продавца, доставка — Uzum'],
+  ['Оборачиваемость','Aylanma','Дней, за которые продаётся запас'],
+  ['Юнит-экономика','Unit-ekonomika','Прибыль с одной проданной единицы'],
+  ['DBS','DBS','Товар у продавца, доставляет тоже продавец — без логистического сбора Uzum'],
+  ['Этикетка','Yorliq / etiketka','Штрихкод на каждой единице товара для приёмки'],
+  ['Таймслот','—','Дата и время, когда склад примет вашу поставку'],
+  ['Акт отправки','—','Документ поставки FBO, печатается в двух экземплярах'],
+  ['Акт расхождений','—','Результат приёмки; претензию подают в течение 30 дней'],
+  ['Габариты','Gabaritlar / o\'lchamlar','Д × Ш × В упаковки — от них считается логистика'],
+  ['ИКПУ','IKPU','Код товара в налоговом классификаторе, нужен в карточке'],
+  ['«Буст в ТОП»','—','Реклама Uzum с оплатой за 1 000 показов'],
+  ['«Буст заказов»','—','Реклама Uzum с оплатой за заказ — процент от цены'],
+  ['Промокод','Promokod','Скидка для покупателя до 50%'],
+  ['Календарь акций','—','Раздел кабинета, где выбирают акции для участия']
+];
+
+/* ================= LESSONS ================= */
+const LESSONS=[
+{id:'l1',n:'01',t:'Как устроен Uzum и кабинет продавца',time:'60 мин',why:'Первый вопрос на собеседовании — «в каком кабинете работали». Нужно понимать путь заказа и деньги так, будто уже работали.',body:`
+<h3>Путь заказа на модели FBO</h3>
+<div class="flow"><div>Продавец создаёт карточку, она проходит модерацию</div><div>Поставка на склад Uzum и приёмка</div><div>Покупатель находит товар в поиске, каталоге или рекламе и заказывает</div><div>Uzum собирает заказ и доставляет в пункт выдачи или курьером</div><div>Покупатель забирает или отказывается, может вернуть</div><div>Uzum перечисляет деньги за вычетом комиссии и услуг</div></div>
+<p>Менеджер влияет на каждый шаг: делает карточку, планирует поставку, приводит покупателя рекламой и ценой, удерживает его рейтингом и отзывами.</p>
+<h3>Модели работы</h3>
+<div class="tbl-wrap"><table><tr><th></th><th>FBO</th><th>FBS</th><th>DBS</th></tr>
+<tr><td>Где хранится</td><td>Склад Uzum</td><td>Склад продавца</td><td>Склад продавца</td></tr>
+<tr><td>Кто собирает</td><td>Uzum</td><td>Продавец</td><td>Продавец</td></tr>
+<tr><td>Кто доставляет</td><td>Uzum</td><td>Uzum</td><td>Продавец</td></tr>
+<tr><td>С какого года</td><td>С запуска</td><td>С октября 2024</td><td>С июня 2025</td></tr>
+<tr><td>Плюсы</td><td>Быстрая доставка, выше в поиске, меньше рутины</td><td>Нет поставок на склад; комиссия и логистика — как на FBO</td><td>Нет логистического сбора Uzum; подходит для крупногабарита</td></tr>
+<tr><td>Минусы</td><td>Деньги заморожены в запасе; хранение платное после 60 дней</td><td>Отгрузка максимум за 2 дня, штрафы за отмены</td><td>Доставка на вас, срок — до 5 дней</td></tr></table></div>
+<p>Есть ещё EDBS: Uzum работает только как витрина, а вместо комиссии вы платите за рекламные услуги. Это редкая схема для отдельного юрлица — на собеседовании достаточно знать, что она существует.</p>
+<h3>Кто может продавать</h3>
+<p>ИП, ООО и самозанятые. Регистрация — на seller.uzum.uz. После неё в налоговом кабинете my3.soliq.uz нужно добавить Uzum Market в список комиссионеров и написать в поддержку; проверка занимает до 2 дней. Вам это пригодится в двух случаях: вакансия «запуск под ключ» (там ведут клиента с регистрации) и если откроете свой магазин.</p>
+<h3>Разделы кабинета продавца</h3>
+<ul><li><b>Товары</b> — создание карточек, статусы модерации, цены.</li><li><b>Поставки</b> и <b>Этикетки</b> — заявки на FBO, таймслоты, акты, печать штрихкодов.</li><li><b>Заказы FBS/DBS</b> — сборка и отгрузка, если товар хранится у продавца.</li><li><b>Финансы</b> и <b>Отчёты</b> — продажи, удержания, выплаты.</li><li><b>Отзывы</b> — ответы покупателям.</li><li><b>Маркетинг</b> — акции, календарь акций, промокоды, «Буст в ТОП».</li><li><b>Продвижение</b> — «Буст заказов».</li><li><b>Аналитика</b> — воронка продаж, анализ событий.</li><li><b>Сотрудники</b> — доступы для команды. Так вам и выдадут кабинет на работе.</li></ul>
+<p>Есть мобильное приложение Uzum Sellers, поддержка продавцов работает через Telegram-бот @umarket_business_bot.</p>
+<h3>Деньги продавца</h3>
+<div class="formula">Выплата = Продажи − Комиссия Uzum − Логистика − Хранение и прочие услуги − Реклама − Штрафы</div>
+<p>Деньги приходят по графику: бесплатно 7-го и 21-го числа (или раз в месяц) за товары, которые покупатель получил больше 10 дней назад. Эти 10 дней — срок, в который покупатель может вернуть товар. Выплаты чаще — платные: раз в неделю — 1%, каждый рабочий день — 1,5%, срочно — 2,5%.</p>
+<h3>Утро менеджера: 40 минут</h3>
+<ol><li><b>Заказы и остатки</b> — нет ли SKU, которых хватит меньше чем на 7–10 дней.</li><li><b>Отзывы и вопросы</b> — ответить на всё новое.</li><li><b>Реклама</b> — расход за вчера, ДРР по кампаниям, выключить то, что сливает.</li><li><b>Цены</b> — изменения у 3–5 главных конкурентов.</li><li><b>Карточки</b> — отклонения модерации, ошибки.</li></ol>
+<p>Раз в неделю — отчёт руководителю, план поставки, ABC-анализ.</p>
+<h3>Где учиться бесплатно</h3>
+<ul><li><a href="https://seller.uzum.uz/manual" target="_blank" rel="noopener">Инструкция продавца</a> — официальная и подробная, на русском и узбекском: тарифы, поставки, карточки, продвижение. Главный первоисточник для этого курса.</li><li><a href="https://t.me/MarketplaceUzum" target="_blank" rel="noopener">Канал продавцов Uzum в Telegram</a> — все изменения правил и тарифов. Подпишитесь в первый же день: правила меняются почти каждый месяц.</li><li><a href="https://academy.uzum.uz" target="_blank" rel="noopener">Uzum Sellers Academy</a> — бесплатно: ежедневный Seller Start Day и первый модуль курса Start.</li></ul>
+<div class="note"><b>Академия бесплатна не полностью.</b> Курс Start стоит 1 190 000 сум, отдельный курс академии «Менеджер Uzum Market» — 2 000 000 сум (12 онлайн-занятий с дипломным проектом). Для старта он не обязателен: основа есть в бесплатной инструкции. Но сертификат академии работодателю понятен — решайте по бюджету.</div>
+`},
+{id:'l2',n:'02',t:'Карточка товара и SEO внутри Uzum',time:'90 мин',why:'Карточка — рабочий инструмент номер один: от неё зависят CTR, конверсия и то, найдёт ли товар поиск. Здесь у вас уже есть база.',body:`
+<h3>Название: формула</h3>
+<div class="formula">Тип товара + Бренд + Модель / ключевая характеристика + Объём / размер / количество</div>
+<p>Пример: «Сыворотка для лица Glow Lab с ниацинамидом 10%, 30 мл». Главный запрос — в начало, минимум 3 слова. Без КАПСА, восклицательных знаков, слов «хит», «лучший», «скидка» — это стоп-слова для модерации, и поиску они ничего не дают.</p>
+<p>Название, описание и характеристики на Uzum заполняются на двух языках: <b>узбекском (латиница)</b> и <b>русском (кириллица)</b>. Узбекская версия — не формальность: по ней ищет большая часть покупателей.</p>
+<h3>Ключевые слова</h3>
+<ul><li><b>Подсказки поиска Uzum</b> — начните вводить «сыворотка для…» и выпишите варианты.</li><li><b>Лидеры категории</b> — какие слова стоят в названиях и характеристиках топ-10.</li><li><b>Слова покупателей</b> — отзывы и вопросы: как люди сами называют товар.</li><li><b>Два языка</b> — русский и узбекский, латиница и кириллица, разговорные варианты: «yuz uchun krem», «крем для лица».</li></ul>
+<p>Главный запрос — в название, остальные — в характеристики и описание, естественным текстом. Повторять одно слово десять раз бесполезно.</p>
+<h3>Фото и инфографика</h3>
+<p>Требования Uzum: JPG, PNG или WebP, вертикальные 3:4, от 750×1000 px, до 5 МБ. Товар занимает больше половины кадра, фон — однотонный. Видео — MP4 от 1080×1440, до 10 МБ, без музыки. Порядок фото:</p>
+<ol><li><b>Главное фото</b> — товар крупно, чистый фон, читается на экране телефона. Отвечает за CTR.</li><li><b>Инфографика</b> — 3–4 главных преимущества крупным шрифтом.</li><li><b>Состав, размеры, объём</b> — то, о чём спрашивают в вопросах.</li><li><b>В использовании</b> — текстура, товар в руке, до и после.</li><li><b>Упаковка и комплектация</b>.</li></ol>
+<h3>Описание</h3>
+<p>Структура: для кого → какую проблему решает → как пользоваться → состав или характеристики → комплектация. Нельзя: контакты, ссылки, упоминание чужих брендов, медицинские обещания («лечит»), сравнение с конкурентами по имени.</p>
+<h3>Характеристики</h3>
+<p>Заполняйте все поля категории. По ним работают фильтры: товар без поля «объём» не появится у покупателя, который выбрал «50 мл».</p>
+<h3>Модерация и технические поля</h3>
+<ul><li>С сентября 2026 карточку без обязательных характеристик нельзя отправить на модерацию — она остаётся черновиком.</li><li>Частые причины отклонения: фото и инфографика, стоп-слова, ошибки в тексте, нет сертификата, «лечебные» обещания.</li><li>Один товар — одна карточка: дубли запрещены.</li><li>Артикул (SKU) — до 7 символов. Штрихкод Uzum сгенерирует сам, или укажите EAN-13 производителя. Нужен код ИКПУ.</li><li><b>Габариты в упаковке</b> — не формальность: от них считается логистический сбор (урок 4). Если их не указать, спишут максимум — 50 000 сум с единицы.</li></ul>
+<h3>Практика: проверка карточки</h3>
+<p>Поля заполнены слабым черновиком — посмотрите, что скажет проверка, потом напишите свою карточку.</p>
+<div data-widget="card"></div>
+`},
+{id:'l3',n:'03',t:'Остатки и поставки',time:'60 мин',why:'Закончившийся хит — самая дорогая ошибка менеджера: теряются продажи и позиции. Затоварка — вторая: деньги заморожены, хранение платное.',body:`
+<h3>Три цифры, которые нужны всегда</h3>
+<ul><li><b>Продажи в день</b> — среднее за последние 14 дней (без дней, когда товара не было).</li><li><b>Срок поставки</b> — от заказа поставщику до приёмки на складе Uzum, в днях.</li><li><b>Страховой запас</b> — 5–7 дней продаж на задержки и всплески.</li></ul>
+<div class="formula">Дней хватит     = Остаток ÷ Продажи в день
+Точка заказа    = Продажи в день × (Срок поставки + Страховой запас)
+Заказать        = Продажи в день × (Срок поставки + Период + Страховой запас) − (Остаток + В пути)</div>
+<div data-widget="stock"></div>
+<h3>Хранение: 60 бесплатных дней</h3>
+<p>Пока оборачиваемость товара не больше 60 дней, хранение на складе Uzum бесплатное. Дальше платите за каждый литр в день: 61–180 дней — 12 сум, 181–360 — 18 сум, от 361 — 24 сум (не больше 5 000 сум за товар в день). Новые SKU первые 30 дней хранятся бесплатно, одежда и обувь — 60. Поэтому везите запас на 30–45 дней, а не «на полгода, чтобы реже возить».</p>
+<h3>Как проходит поставка на FBO</h3>
+<div class="flow"><div>«Поставки → Создать»: габаритная группа, товары (до 100 SKU), себестоимость и количество</div><div>Выбрать таймслот — дату и время приёмки</div><div>Наклеить этикетки: EAN-13 производителя или штрихкод Uzum; на одежду — две</div><div>Распечатать «Акт отправки» в двух экземплярах</div><div>Привезти в свой таймслот на фулфилмент-центр: Ташкент, Сергели, приёмка 06:00–00:00</div><div>Сверить приёмку: претензию по акту расхождений можно подать в течение 30 дней</div></div>
+<p>Сколько стоят ошибки: пересорт, неверный штрихкод, брак, недостача или излишек — 2 500 сум за каждую единицу. Таймслот можно менять не больше 3 раз и отменять не позже чем за 48 часов. С 19.10.2026 за нарушение таймслота — штраф до 300 000 сум за поставку.</p>
+<h3>FBS: ежедневная дисциплина</h3>
+<p>Заказ нужно отгрузить максимум за 2 дня. Отмена по вине продавца позже 24 часов — штраф 9% от суммы заказа (от 10 000 до 360 000 сум). Рейтинг FBS — доля выданных заказов за 8 дней: ниже 90% — предупреждение, ниже 80% — FBS отключают на 3 дня. Остатки в кабинете должны совпадать с реальными — иначе продадите то, чего нет.</p>
+<h3>Шаблон таблицы остатков</h3>
+<div class="tbl-wrap"><table><tr><th>SKU</th><th class="num">Остаток</th><th class="num">В пути</th><th class="num">Продаж/день</th><th class="num">Дней хватит</th><th class="num">Точка заказа</th><th class="num">Заказать</th></tr>
+<tr><td>Сыворотка 30 мл</td><td class="num">16</td><td class="num">0</td><td class="num">9</td><td class="num">1,8</td><td class="num">108</td><td class="num">369</td></tr>
+<tr><td>Маска для волос</td><td class="num">400</td><td class="num">0</td><td class="num">12</td><td class="num">33</td><td class="num">144</td><td class="num">0</td></tr></table></div>
+<p class="muted" style="font-size:14px">Срок поставки 7 дней, страховой запас 5 дней, период 30 дней. В Google Таблицах: <span class="mono">=ОКРУГЛВВЕРХ(МАКС(0; D2*(7+30+5)-(B2+C2)))</span>.</p>
+`},
+{id:'l4',n:'04',t:'Юнит-экономика',time:'75 мин',why:'Без неё нельзя ответить ни на один денежный вопрос: давать ли скидку, сколько тратить на рекламу, продавать ли товар вообще. В вакансии «под ключ» это прямое требование.',body:`
+<h3>Что вычитаем из цены</h3>
+<ul><li><b>Себестоимость</b> — закупка + доставка до склада Uzum + упаковка и маркировка.</li><li><b>Комиссия Uzum</b> — процент от цены продажи, зависит от категории.</li><li><b>Логистика</b> — доставка покупателю и обработка заказа.</li><li><b>Налог</b> — для большинства ИП в Узбекистане это налог с оборота; ставку уточните у бухгалтера.</li><li><b>Реклама</b> — через ДРР: процент от цены.</li><li><b>Возвраты</b> — доля заказов, которую вернули или не забрали, умноженная на стоимость обратной логистики.</li></ul>
+<h3>Тарифы Uzum на осень 2026</h3>
+<ul><li><b>Комиссия</b> — от 1% до 35% в зависимости от категории, чаще всего около 20%. Косметика: помады 17%, шампуни 17,5–20%, парфюм 19–20%. Одежда — 25%, смартфоны на Android — 7%. С 14.10.2026 во многих категориях ставка вырастет на 0,5 п.п. Таблица комиссий — в кабинете и в канале продавцов.</li><li><b>Логистика</b> (с 01.06.2026) — по литражу упаковки: 5 250 сум за объём до 1 л и 250 сум за каждый следующий литр, максимум 50 000 сум. Объём = Д × Ш × В в мм ÷ 1 000 000.</li><li><b>Обработка возврата</b> на FBO — 2 500 / 5 000 / 10 000 сум за единицу: мелко-, средне- и крупногабаритный товар.</li><li><b>Хранение</b> — бесплатно до 60 дней оборачиваемости (урок 3).</li></ul>
+<div class="formula">Прибыль с 1 шт = Цена − Себестоимость − Комиссия − Логистика − Налог − Реклама − Возвраты
+Маржа          = Прибыль ÷ Цена × 100%
+ROI            = Прибыль ÷ Себестоимость × 100%
+Макс. ДРР      = (Прибыль до рекламы) ÷ Цена × 100%</div>
+<p>Цифры в калькуляторе — пример для крема за 119 000 сум в коробке 60 × 60 × 130 мм. Логистика считается сама по габаритам. Комиссию своей категории возьмите из таблицы.</p>
+<div data-widget="unit"></div>
+<div class="note"><b>Правило для собеседования:</b> «Прежде чем давать скидку или повышать ставку, я считаю прибыль с единицы и максимальную ДРР». Одна эта фраза отличает менеджера от оператора.</div>
+`},
+{id:'l5',n:'05',t:'Реклама внутри площадки',time:'75 мин',why:'Работодатели прямо пишут: кампании, ставки, бюджет, ROI и ROAS, отключать неэффективное. Это блок, где менеджер быстрее всего теряет или зарабатывает деньги.',body:`
+<h3>Инструменты Uzum</h3>
+<ul><li><b>«Буст в ТОП»</b> (раздел «Маркетинг») — оплата за 1 000 показов, аукцион. Ставку задаёте на категорию или ключевую фразу, минимальный бюджет — 150 000 сум в неделю. С марта 2026 в поиске нет фиксированных рекламных мест: позицию определяют релевантность, качество карточки и ставка. Слабую карточку реклама не вытянет.</li><li><b>«Буст заказов»</b> (раздел «Продвижение», с апреля 2026) — оплата за заказ (CPO): процент от цены, списывается через час после того, как покупатель получил товар. Минимальная ставка своя в каждой категории. Здесь ДРР почти равна ставке, поэтому сразу видно, окупается ли реклама.</li><li><b>Промокоды</b> — скидка до 50%. <b>Закрепление отзыва</b> — 1 000 сум в сутки. <b>Рекламные ссылки с UTM-метками</b> — для трафика из Instagram и Telegram.</li></ul>
+<p>В статистике кампании смотрите среднюю позицию показа, расход, заказы и выручку. «Бусту в ТОП» ДРР считаете по статистике, для «Буста заказов» правило простое: ставка должна быть ниже маржи до рекламы.</p>
+<h3>Метрики</h3>
+<div class="formula">ДРР  = Расход ÷ Выручка с рекламы × 100%
+ROAS = Выручка с рекламы ÷ Расход
+CPO  = Расход ÷ Заказы с рекламы
+Прибыль с рекламы = Выручка с рекламы × Маржа до рекламы − Расход</div>
+<h3>Правила решений</h3>
+<div class="tbl-wrap"><table><tr><th>Ситуация</th><th>Действие</th></tr>
+<tr><td>ДРР меньше половины маржи, остатка хватает</td><td><span class="chip good">Масштабировать</span> поднять бюджет и ставку</td></tr>
+<tr><td>ДРР между половиной маржи и маржой</td><td><span class="chip warn">Оптимизировать</span> снизить ставку, улучшить карточку</td></tr>
+<tr><td>ДРР выше маржи</td><td><span class="chip bad">Выключить</span> или резко снизить ставку</td></tr>
+<tr><td>Остаток меньше чем на 7 дней</td><td><span class="chip warn">Притормозить</span> рекламу до поставки</td></tr>
+<tr><td>CTR или конверсия карточки ниже средней</td><td><span class="chip warn">Сначала карточка</span> реклама не лечит плохую карточку</td></tr></table></div>
+<p>Новую кампанию оценивайте после 7–14 дней и хотя бы 15–20 заказов: по двум заказам выводов не делают.</p>
+<h3>Три кейса</h3>
+<p>Подставьте цифры в калькулятор и решите: 1) расход 300 000, выручка 3 000 000, маржа 30% · 2) расход 900 000, выручка 3 600 000, маржа 30% · 3) расход 1 260 000, выручка 3 150 000, маржа 26%.</p>
+<div data-widget="ads"></div>
+`},
+{id:'l6',n:'06',t:'Цены и акции',time:'45 мин',why:'Цена — самый быстрый рычаг продаж и самый быстрый способ уйти в минус. Нужно знать нижнюю границу и считать каждую акцию.',body:`
+<h3>Коридор цены</h3>
+<ul><li><b>Пол</b> — цена, при которой прибыль с единицы равна нулю (из юнит-экономики). Ниже — только осознанная распродажа.</li><li><b>Рынок</b> — медиана цен 5 ближайших конкурентов с похожим рейтингом.</li><li><b>Правила компании</b> — максимальная скидка, которую вам разрешено давать без согласования.</li></ul>
+<h3>Мониторинг конкурентов</h3>
+<p>Таблица раз в 2–3 дня: товар конкурента, цена, зачёркнутая цена, рейтинг, число отзывов, участие в акции. Реагировать нужно на устойчивые изменения, а не на однодневные скачки.</p>
+<h3>Акции маркетплейса</h3>
+<p>Акции — в «Маркетинг → Календарь акций», участие добровольное. В условиях бывают минимальная скидка, категория, минимальная цена. С ноября 2025 работают «умные скидки»: алгоритм сам предлагает цену входа в акцию. Проверяйте её калькулятором ниже, а не принимайте по умолчанию.</p>
+<div class="tbl-wrap"><table><tr><th>Акция Uzum</th><th class="num">Даты 2026</th></tr><tr><td>День рождения Uzum Market</td><td class="num">29.09 – 26.10</td></tr><tr><td>11.11</td><td class="num">27.10 – 16.11</td></tr><tr><td>Щедрая пятница</td><td class="num">17.11 – 30.11</td></tr><tr><td>Встречаем Новый год</td><td class="num">01.12 – 31.12</td></tr></table></div>
+<p>В акцию 11.11 в 2025 году Uzum получил больше 2,4 млн заказов. Запас под такие акции готовят за 3–4 недели (урок 3). Если собеседование будет в октябре, почти наверняка спросят, как вы подготовите магазин к 11.11 — разбор есть во вкладке «Собеседование».</p>
+<p>Плюсы — трафик, плашка акции, рост позиций. Минус — скидка идёт из вашей маржи. Нельзя поднимать цену перед акцией, чтобы потом «снизить»: площадки это отслеживают, а покупатели видят историю цен.</p>
+<div data-widget="promo"></div>
+`},
+{id:'l7',n:'07',t:'Отзывы, рейтинг, возвраты',time:'60 мин',why:'Рейтинг ниже 4,5 заметно режет конверсию. Ответы на отзывы — ежедневная работа, и в двух вакансиях её нужно делать на узбекском.',body:`
+<h3>Формула ответа</h3>
+<div class="formula">1. Обратиться и поблагодарить (или извиниться)
+2. Ответить по сути — конкретно, без шаблонных фраз
+3. Решение: как вернуть, как пользоваться, что изменили
+4. Приглашение: «Будем рады видеть снова»</div>
+<ul><li>Отвечать в течение суток — на все отзывы, и на хорошие тоже.</li><li>Отвечать на языке отзыва.</li><li>Не спорить и не обвинять — ответ читают будущие покупатели.</li><li>Не давать телефон и мессенджеры вне площадки — это нарушение правил.</li></ul>
+<h3>Шаблоны</h3>
+<div class="tbl-wrap"><table><tr><th>Ситуация</th><th>RU</th><th>UZ</th></tr>
+<tr><td>5 звёзд</td><td>Спасибо за покупку и тёплый отзыв! Рады, что крем подошёл. Ждём вас снова!</td><td>Xaridingiz va iliq fikringiz uchun rahmat! Krem sizga yoqqanidan xursandmiz. Yana kutib qolamiz!</td></tr>
+<tr><td>Брак</td><td>Извините за неприятность. Оформите возврат в приложении Uzum — деньги вернутся полностью. Мы уже проверяем эту партию.</td><td>Noqulaylik uchun uzr so'raymiz. Mahsulotni Uzum ilovasi orqali qaytarishingiz mumkin — pulingiz to'liq qaytariladi. Bu partiyani tekshiryapmiz.</td></tr>
+<tr><td>Не подошёл размер</td><td>Жаль, что размер не подошёл. В карточке есть таблица размеров — мы добавили замеры по длине. Возврат можно оформить в приложении.</td><td>O'lcham to'g'ri kelmagani uchun afsusdamiz. Kartochkada o'lchamlar jadvali bor — uzunlik bo'yicha o'lchamlarni qo'shdik. Qaytarishni ilova orqali rasmiylashtirish mumkin.</td></tr></table></div>
+<p class="muted" style="font-size:14px">Узбекские шаблоны покажите носителю языка перед тем, как использовать в работе: живой язык отзывов проще книжного.</p>
+<h3>Низкий рейтинг: что делать</h3>
+<ol><li>Выписать последние 20–30 негативных отзывов и сгруппировать причины: качество, размер, несоответствие фото, упаковка, доставка.</li><li>Причины на стороне карточки исправить в карточке: реальные фото, размерная сетка, состав.</li><li>Причины на стороне товара — передать закупке и поставщику с цифрами.</li><li>Накрутка отзывов запрещена правилами и ведёт к блокировке — не предлагайте её даже на собеседовании.</li></ol>
+<h3>Правила Uzum по отзывам и возвратам</h3>
+<ul><li>Отвечать — в разделе «Отзывы». Негативный отзыв можно попробовать оспорить только в первые 14 дней после публикации — поэтому отзывы проверяют каждый день.</li><li>Хороший отзыв можно закрепить в карточке — 1 000 сум в сутки.</li><li>Товар надлежащего качества покупатель может вернуть в течение 10 дней. Брак продавец должен забрать со склада за 30 дней.</li><li>Обработка возврата на FBO — от 2 500 сум за единицу, так что каждый процент возвратов бьёт по юнит-экономике.</li></ul>
+<h3>Тренажёр ответов</h3>
+<div data-widget="review"></div>
+`},
+{id:'l8',n:'08',t:'Аналитика: воронка, ABC, отчёт',time:'75 мин',why:'Аналитика связывает все блоки: по цифрам вы понимаете, что чинить — фото, цену, остаток или рекламу. Именно это спрашивают кейсами на собеседовании.',body:`
+<h3>Воронка товара</h3>
+<div class="flow"><div>Показы в поиске и каталоге</div><div>Переходы в карточку — CTR</div><div>Добавления в корзину</div><div>Заказы — конверсия</div><div>Выкупы — доля забранных заказов</div></div>
+<div class="formula">CTR        = Переходы ÷ Показы × 100%
+Конверсия  = Заказы ÷ Переходы × 100%
+Средний чек = Выручка ÷ Число заказов
+Оборачиваемость, дней = Средний остаток ÷ Продажи в день</div>
+<h3>Диагностика по двум цифрам</h3>
+<div class="tbl-wrap"><table><tr><th></th><th>Конверсия нормальная</th><th>Конверсия низкая</th></tr>
+<tr><td><b>CTR нормальный</b></td><td>Масштабировать: реклама, остатки</td><td>Карточка: цена, отзывы, характеристики, описание</td></tr>
+<tr><td><b>CTR низкий</b></td><td>Выдача: главное фото, название, цена в выдаче</td><td>Товар целиком: цена, фото, рейтинг, возможно — не тот товар для рынка</td></tr></table></div>
+<p>Сравнивайте не с «идеальными» цифрами, а с медианой своей категории и с прошлым периодом этого же товара.</p>
+<h3>ABC-анализ</h3>
+<p>Отсортируйте SKU по выручке за 30 дней. <b>A</b> — первые товары, которые вместе дают около 80% выручки; <b>B</b> — следующие ~15%; <b>C</b> — остальные ~5%. Группе A — приоритет в поставках и рекламе, группе C — решение: улучшить, распродать или вывести.</p>
+<h3>Еженедельный отчёт</h3>
+<ul><li>Выручка, заказы, средний чек — к прошлой неделе, в процентах</li><li>Воронка по группе A</li><li>Реклама: расход, ДРР по кампаниям, что выключено</li><li>Остатки: что кончится в ближайшие 14 дней</li><li>Рейтинг: новые негативные отзывы и что сделано</li><li>План: 3–5 действий на неделю</li></ul>
+<h3>Где брать цифры</h3>
+<ul><li><b>В кабинете:</b> «Аналитика → Воронка продаж» и «Анализ событий», статистика рекламных кампаний, «Финансы» и «Отчёты».</li><li><b>Сервисы аналитики по Uzum:</b> MPSTATS, SellerPro, Sellmonitor, MARGN, Statbook. Показывают продажи и цены чужих товаров, помогают выбрать нишу. В некоторых есть пробный период.</li><li><b>Open API Uzum</b> — через него выгрузки можно автоматизировать в Google Таблицы. Для вас это сильная сторона: мало кто из менеджеров соберёт такой отчёт сам. Что именно отдаёт API — смотрите в его документации.</li></ul>
+<div class="note"><b>Дальше — практика.</b> Во вкладке «Тренажёр» — выгрузка кабинета на 7 товаров: найдите главную проблему каждого. <button class="linkbtn" data-go="practice">Открыть тренажёр</button></div>
+`}
+];
+
+/* ================= STATE ================= */
+const LS_KEY='uzum21:v1';
+let S={days:{},lessons:{},quizBest:null,caseBest:null,updated:0};
+try{const raw=localStorage.getItem(LS_KEY);if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
+let dbRef=null,saveTimer=null,writing=false,dirty=false;
+function persist(){
+  S.updated=Date.now();
+  try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){}
+  if(!dbRef)return;
+  clearTimeout(saveTimer);saveTimer=setTimeout(flush,700);
+}
+async function flush(){
+  if(!dbRef)return;
+  if(writing){dirty=true;return}
+  writing=true;dirty=false;
+  try{await dbRef.set(JSON.parse(JSON.stringify(S)))}catch(e){if(e&&e.code==='invalid_argument'){dbRef=null;setSync(false)}}
+  writing=false;
+  if(dirty)flush();
+}
+function setSync(cloud){
+  const el=document.getElementById('sync');
+  el.classList.toggle('cloud',cloud);
+  el.querySelector('span').textContent=cloud?'Прогресс сохраняется в вашем аккаунте':'Прогресс хранится в этом браузере';
+}
+(async()=>{
+  const c=window.claude;if(!c||!c.use)return;
+  try{
+    const [db,user]=await Promise.all([c.use('db'),c.use('user')]);
+    if(!db||!user)return;
+    const uid=await user.id();if(!uid)return;
+    const ref=db.doc('data/users/'+uid+'/progress');
+    const snap=await ref.get();
+    if(snap.exists){
+      const r=snap.data()||{};
+      if((r.updated||0)>(S.updated||0)){S=Object.assign({days:{},lessons:{},quizBest:null,caseBest:null,updated:0},JSON.parse(JSON.stringify(r)));try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){}renderAllProgress()}
+      dbRef=ref;
+      if((S.updated||0)>(r.updated||0))flush();
+    }else{
+      dbRef=ref;
+      if(S.updated)flush();
+    }
+    setSync(true);
+  }catch(e){}
+})();
+
+/* ================= HELPERS ================= */
+const $=s=>document.querySelector(s);
+const fmt=n=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0}).format(Math.round(n));
+const fmt1=n=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1,minimumFractionDigits:0}).format(n);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=id=>{const v=parseFloat(String(document.getElementById(id).value).replace(/\s/g,'').replace(',','.'));return isFinite(v)?v:0};
+let samplePromise=null;
+function getSample(){if(!samplePromise){samplePromise=(window.claude&&window.claude.use)?window.claude.use('sample').catch(()=>null):Promise.resolve(null)}return samplePromise}
+function aiErr(e){const m={not_granted:'Проверка ИИ не разрешена для этой страницы.',sampling_disabled:'ИИ недоступен для этого аккаунта.',rate_limited:'Слишком много запросов — попробуйте через минуту.',session_expired:'Войдите в claude.ai заново.',invalid_json:'Ответ пришёл в неверном формате — нажмите ещё раз.',refused:'ИИ отказался отвечать на этот текст — измените его.'};return m[e&&e.code]||'Не получилось получить ответ — попробуйте ещё раз.'}
+const HIDE_CODES=['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'];
+
+/* ================= TABS ================= */
+const TABS=['route','lessons','practice','interview','glossary'];
+function showTab(id,push){
+  if(!TABS.includes(id))id='route';
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===id?'true':'false'));
+  TABS.forEach(t=>{document.getElementById('p-'+t).hidden=t!==id});
+  if(push!==false){try{history.replaceState(null,'','#'+id)}catch(e){}}
+}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{showTab(b.dataset.tab);window.scrollTo({top:document.querySelector('.tabbar').offsetTop,behavior:'instant'})}));
+document.addEventListener('click',e=>{
+  const o=e.target.closest('[data-open]');if(o){openLesson(o.dataset.open);return}
+  const g=e.target.closest('[data-go]');if(g){showTab(g.dataset.go);window.scrollTo({top:document.querySelector('.tabbar').offsetTop,behavior:'instant'})}
+});
+
+/* ================= PROGRESS UI ================= */
+function renderAllProgress(){
+  const bc=$('#barcode');bc.innerHTML='';
+  let d=0;
+  for(let i=1;i<=21;i++){const s=document.createElement('span');if(i%7===0)s.className='w';if(S.days[i]){s.classList.add('on');d++}bc.appendChild(s)}
+  $('#st-days').textContent=d+'/21';
+  const l=LESSONS.filter(x=>S.lessons[x.id]).length;
+  $('#st-lessons').textContent=l+'/8';
+  $('#st-quiz').textContent=S.quizBest==null?'—':S.quizBest+'%';
+  $('#st-case').textContent=S.caseBest==null?'—':S.caseBest+'/7';
+  document.querySelectorAll('[data-day]').forEach(cb=>{cb.checked=!!S.days[cb.dataset.day];cb.closest('.day').classList.toggle('done',cb.checked)});
+  renderLnav();
+  const lb=document.getElementById('lesson-done');if(lb)syncLessonBtn();
+}
+
+/* ================= ROUTE ================= */
+$('#blocks').innerHTML=BLOCKS.map(b=>`<div class="block"><span class="tagline">${b.tag}</span><h4>${b.t}</h4><p>${b.p}</p><button class="linkbtn" data-open="${b.l}">Урок ${b.l.slice(1)} →</button></div>`).join('');
+$('#gap').innerHTML='<tr><th>Навык</th><th>Где требуют</th><th>У вас</th><th>Как закрыть</th></tr>'+GAP.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]==='Нет'?'<span class="chip bad">Нет</span>':r[2]==='—'?'<span class="muted">—</span>':'<span class="chip good">'+r[2]+'</span>'}</td><td>${r[3]}</td></tr>`).join('');
+$('#vac').innerHTML='<tr><th>Вакансия</th><th>Оплата</th><th>Опыт</th><th>Когда откликаться</th></tr>'+VACS.map(v=>`<tr><td><b>${v.n}</b></td><td class="mono" style="white-space:nowrap">${v.pay}</td><td>${v.exp}</td><td><span class="chip ${v.c}">${v.when}</span></td></tr>`).join('');
+{
+  let di=0;
+  $('#plan').innerHTML=PLAN.map(w=>`<div><div class="week-h"><span class="eyebrow">${w.w}</span><h3>${w.t}</h3></div><div class="days">${w.days.map(d=>{di++;const link=d.l?`<button class="linkbtn" data-open="${d.l}">Урок ${d.l.slice(1)}</button>`:d.go?`<button class="linkbtn" data-go="${d.go}">${{practice:'Тренажёр',interview:'Собеседование',route:'Таблица вакансий'}[d.go]}</button>`:'';return `<div class="day"><div class="shelf"><small>ДЕНЬ</small>${String(di).padStart(2,'0')}</div><div class="day-t">${d.t}</div><ul>${d.tasks.map(t=>`<li>${t}</li>`).join('')}</ul><div class="day-f"><label class="check"><input type="checkbox" id="day-${di}" data-day="${di}"> Готово</label>${link}</div></div>`}).join('')}</div></div>`).join('');
+}
+document.getElementById('plan').addEventListener('change',e=>{const cb=e.target.closest('[data-day]');if(!cb)return;if(cb.checked)S.days[cb.dataset.day]=true;else delete S.days[cb.dataset.day];persist();renderAllProgress()});
+
+/* ================= LESSONS ================= */
+let curLesson='l1';
+function renderLnav(){
+  $('#lnav').innerHTML=LESSONS.map(l=>`<button data-lesson="${l.id}" aria-current="${l.id===curLesson}"><span class="n">${l.n}</span><span class="t">${l.t}</span><span class="ok ${S.lessons[l.id]?'on':''}" aria-label="${S.lessons[l.id]?'пройден':'не пройден'}">${S.lessons[l.id]?'✓':''}</span></button>`).join('');
+}
+$('#lnav').addEventListener('click',e=>{const b=e.target.closest('[data-lesson]');if(b)openLesson(b.dataset.lesson,true)});
+function syncLessonBtn(){const b=document.getElementById('lesson-done');if(!b)return;const on=!!S.lessons[curLesson];b.textContent=on?'Урок пройден ✓':'Отметить урок пройденным';b.classList.toggle('ghost',on)}
+function openLesson(id,stay){
+  const L=LESSONS.find(x=>x.id===id)||LESSONS[0];curLesson=L.id;
+  const i=LESSONS.indexOf(L),next=LESSONS[i+1];
+  $('#lesson').innerHTML=`<header><div class="row"><span class="eyebrow">Урок ${L.n} · ${L.time}</span></div><h2>${L.t}</h2><p class="why">${L.why}</p></header><div class="prose">${L.body}</div><div class="lesson-end"><button class="btn" id="lesson-done"></button>${next?`<button class="btn ghost" data-open="${next.id}">Следующий: ${next.t} →</button>`:`<button class="btn ghost" data-go="practice">К тренажёру →</button>`}</div>`;
+  document.getElementById('lesson-done').addEventListener('click',()=>{if(S.lessons[curLesson])delete S.lessons[curLesson];else S.lessons[curLesson]=true;persist();renderAllProgress()});
+  syncLessonBtn();renderLnav();mountWidgets();
+  showTab('lessons',false);try{history.replaceState(null,'','#'+L.id)}catch(e){}
+  const top=document.querySelector('.tabbar').offsetTop;
+  if(!stay||window.scrollY>top)window.scrollTo({top,behavior:'instant'});
+}
+
+/* ================= WIDGETS ================= */
+function mountWidgets(){
+  document.querySelectorAll('[data-widget]').forEach(el=>{const f=W[el.dataset.widget];if(f)f(el)});
+}
+function bindCalc(el,fn){el.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',fn));fn()}
+const W={
+unit(el){
+  el.className='widget';
+  el.innerHTML=`<div class="w-h"><h4>Калькулятор юнит-экономики</h4><span class="chip">пример: крем 50 мл</span></div>
+  <div class="fields">
+   <div class="field"><label for="u-price">Цена продажи, сум</label><input id="u-price" inputmode="decimal" value="119000"></div>
+   <div class="field"><label for="u-cost">Себестоимость, сум</label><input id="u-cost" inputmode="decimal" value="38000"></div>
+   <div class="field"><label for="u-com">Комиссия Uzum, %</label><input id="u-com" inputmode="decimal" value="20"></div>
+   <div class="field"><label for="u-tax">Налог, %</label><input id="u-tax" inputmode="decimal" value="4"></div>
+   <div class="field"><label for="u-dl">Упаковка: длина, мм</label><input id="u-dl" inputmode="decimal" value="60"></div>
+   <div class="field"><label for="u-dw">Ширина, мм</label><input id="u-dw" inputmode="decimal" value="60"></div>
+   <div class="field"><label for="u-dh">Высота, мм</label><input id="u-dh" inputmode="decimal" value="130"></div>
+   <div class="field"><label for="u-drr">Реклама (ДРР), %</label><input id="u-drr" inputmode="decimal" value="10"></div>
+   <div class="field"><label for="u-ret">Возвраты, % заказов</label><input id="u-ret" inputmode="decimal" value="5"></div>
+   <div class="field"><label for="u-retc">Обработка 1 возврата, сум</label><input id="u-retc" inputmode="decimal" value="2500"></div>
+  </div>
+  <p class="muted" style="font-size:14px" id="u-lognote"></p>
+  <div class="kpis"><div class="kpi"><span>Прибыль с 1 шт</span><b id="u-o-p">—</b></div><div class="kpi"><span>Маржа</span><b id="u-o-m">—</b></div><div class="kpi"><span>ROI</span><b id="u-o-r">—</b></div><div class="kpi"><span>Макс. ДРР</span><b id="u-o-d">—</b></div></div>
+  <div><p class="eyebrow" style="margin-bottom:8px">Куда уходит цена, сум</p><div class="bars" id="u-bars"></div></div>
+  <div class="verdict" id="u-v"></div>`;
+  bindCalc(el,()=>{
+    const vol=num('u-dl')*num('u-dw')*num('u-dh')/1e6;
+    const L=vol>0?Math.min(50000,5250+250*Math.max(0,Math.ceil(vol)-1)):50000;
+    $('#u-lognote').textContent=vol>0?`Объём упаковки ${fmt1(vol)} л → логистика ${fmt(L)} сум (тариф с 01.06.2026: 5 250 сум до 1 л + 250 сум за каждый следующий литр, максимум 50 000).`:'Габариты не указаны — Uzum спишет максимум, 50 000 сум.';
+    const P=num('u-price'),C=num('u-cost'),com=P*num('u-com')/100,T=P*num('u-tax')/100,A=P*num('u-drr')/100,R=num('u-ret')/100*num('u-retc');
+    const pre=P-C-com-L-T-R,pr=pre-A,m=P?pr/P*100:0,roi=C?pr/C*100:0,maxd=P?pre/P*100:0;
+    $('#u-o-p').textContent=fmt(pr)+' сум';$('#u-o-m').textContent=fmt1(m)+'%';$('#u-o-r').textContent=fmt(roi)+'%';$('#u-o-d').textContent=fmt1(Math.max(0,maxd))+'%';
+    const rows=[['Себестоимость',C],['Комиссия Uzum',com],['Логистика',L],['Налог',T],['Реклама',A],['Возвраты',R],[pr>=0?'Прибыль':'Убыток',Math.abs(pr),pr>=0?'profit':'loss']];
+    const max=Math.max(P,...rows.map(r=>r[1]),1);
+    $('#u-bars').innerHTML=rows.map(r=>`<div class="bar-row ${r[2]||''}"><span>${r[0]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(0,r[1]/max*100)}%"></div></div><span class="v">${fmt(r[1])}${P?` · ${fmt(r[1]/P*100)}%`:''}</span></div>`).join('');
+    const v=$('#u-v');
+    if(pr<0)v.innerHTML=`<span class="chip bad">Убыток</span><span>Товар теряет ${fmt(-pr)} сум с каждой продажи. Поднимите цену, найдите поставщика дешевле или уберите рекламу: без неё прибыль ${fmt(pre)} сум.</span>`;
+    else if(m<12)v.innerHTML=`<span class="chip warn">Тонко</span><span>Маржа ${fmt1(m)}% — любая скидка или рост ставки уведут в минус. Скидки больше ${fmt1(Math.max(0,m-2))}% не давайте.</span>`;
+    else v.innerHTML=`<span class="chip good">В плюсе</span><span>С каждой продажи ${fmt(pr)} сум. Реклама окупается, пока ДРР ниже ${fmt1(maxd)}% — это ваша граница для ставок.</span>`;
+  });
+},
+stock(el){
+  el.className='widget';
+  el.innerHTML=`<div class="w-h"><h4>Расчёт поставки</h4><span class="chip">пример: сыворотка</span></div>
+  <div class="fields">
+   <div class="field"><label for="s-st">Остаток на складе, шт</label><input id="s-st" inputmode="decimal" value="90"></div>
+   <div class="field"><label for="s-tr">В пути, шт</label><input id="s-tr" inputmode="decimal" value="0"></div>
+   <div class="field"><label for="s-v">Продажи в день, шт</label><input id="s-v" inputmode="decimal" value="12"></div>
+   <div class="field"><label for="s-lt">Срок поставки, дней</label><input id="s-lt" inputmode="decimal" value="6"></div>
+   <div class="field"><label for="s-ss">Страховой запас, дней</label><input id="s-ss" inputmode="decimal" value="5"></div>
+   <div class="field"><label for="s-p">Везём на период, дней</label><input id="s-p" inputmode="decimal" value="30"></div>
+  </div>
+  <div class="kpis"><div class="kpi"><span>Запаса хватит</span><b id="s-o-d">—</b></div><div class="kpi"><span>Точка заказа</span><b id="s-o-rp">—</b></div><div class="kpi"><span>Заказать сейчас</span><b id="s-o-q">—</b></div></div>
+  <div class="verdict" id="s-v-out"></div>`;
+  bindCalc(el,()=>{
+    const st=num('s-st'),tr=num('s-tr'),v=num('s-v'),lt=num('s-lt'),ss=num('s-ss'),p=num('s-p');
+    const days=v?(st+tr)/v:Infinity,rp=v*(lt+ss),q=Math.max(0,Math.ceil(v*(lt+p+ss)-(st+tr)));
+    $('#s-o-d').textContent=isFinite(days)?fmt1(days)+' дн':'∞';$('#s-o-rp').textContent=fmt(rp)+' шт';$('#s-o-q').textContent=fmt(q)+' шт';
+    const o=$('#s-v-out');
+    if(days<lt)o.innerHTML=`<span class="chip bad">Критично</span><span>Товар закончится раньше, чем придёт поставка: разрыв ~${fmt1(lt-days)} дн. Везите сейчас, а рекламу на этот товар притормозите, чтобы растянуть остаток.</span>`;
+    else if(st+tr<=rp)o.innerHTML=`<span class="chip warn">Пора заказывать</span><span>Остаток ниже точки заказа (${fmt(rp)} шт). Оформляйте поставку на ${fmt(q)} шт сегодня.</span>`;
+    else if(days>60)o.innerHTML=`<span class="chip warn">Затоварка</span><span>Запаса на ${fmt(days)} дн. — больше 60 дней оборачиваемости, после них хранение на складе Uzum платное. Не допоставляйте, подумайте об акции.</span>`;
+    else o.innerHTML=`<span class="chip good">Норма</span><span>Заказывать пока рано: до точки заказа ещё ${fmt(st+tr-rp)} шт — примерно ${fmt1((st+tr-rp)/(v||1))} дн.</span>`;
+  });
+},
+ads(el){
+  el.className='widget';
+  el.innerHTML=`<div class="w-h"><h4>Окупается ли реклама</h4><span class="chip">кейс 3</span></div>
+  <div class="fields">
+   <div class="field"><label for="a-sp">Расход, сум</label><input id="a-sp" inputmode="decimal" value="1260000"></div>
+   <div class="field"><label for="a-rev">Выручка с рекламы, сум</label><input id="a-rev" inputmode="decimal" value="3150000"></div>
+   <div class="field"><label for="a-ord">Заказов с рекламы</label><input id="a-ord" inputmode="decimal" value="42"></div>
+   <div class="field"><label for="a-m">Маржа до рекламы, %</label><input id="a-m" inputmode="decimal" value="26"></div>
+  </div>
+  <div class="kpis"><div class="kpi"><span>ДРР</span><b id="a-o-d">—</b></div><div class="kpi"><span>ROAS</span><b id="a-o-r">—</b></div><div class="kpi"><span>CPO</span><b id="a-o-c">—</b></div><div class="kpi"><span>Прибыль с рекламы</span><b id="a-o-p">—</b></div></div>
+  <div class="verdict" id="a-v"></div>`;
+  bindCalc(el,()=>{
+    const sp=num('a-sp'),rev=num('a-rev'),o=num('a-ord'),m=num('a-m');
+    const drr=rev?sp/rev*100:0,roas=sp?rev/sp:0,cpo=o?sp/o:0,pr=rev*m/100-sp;
+    $('#a-o-d').textContent=fmt1(drr)+'%';$('#a-o-r').textContent=fmt1(roas);$('#a-o-c').textContent=fmt(cpo)+' сум';$('#a-o-p').textContent=fmt(pr)+' сум';
+    const v=$('#a-v');
+    if(!rev)v.innerHTML=`<span class="chip bad">Нет продаж</span><span>Расход без заказов. Проверьте карточку и ставку; если за 7 дней нет заказов — выключайте.</span>`;
+    else if(drr>m)v.innerHTML=`<span class="chip bad">Выключить</span><span>ДРР ${fmt1(drr)}% выше маржи ${fmt1(m)}% — реклама съедает больше, чем приносит: минус ${fmt(-pr)} сум. Снизьте ставку или выключите.</span>`;
+    else if(drr>m/2)v.innerHTML=`<span class="chip warn">Оптимизировать</span><span>В плюсе на ${fmt(pr)} сум, но запас небольшой. Снижайте ставку шагами по 10–15% и следите за заказами.</span>`;
+    else v.innerHTML=`<span class="chip good">Масштабировать</span><span>ДРР ${fmt1(drr)}% меньше половины маржи — прибыль ${fmt(pr)} сум. Поднимайте бюджет, если остатка хватит.</span>`;
+  });
+},
+promo(el){
+  el.className='widget';
+  el.innerHTML=`<div class="w-h"><h4>Выгодна ли акция</h4><span class="chip">пример</span></div>
+  <div class="fields">
+   <div class="field"><label for="p-pr">Цена сейчас, сум</label><input id="p-pr" inputmode="decimal" value="100000"></div>
+   <div class="field"><label for="p-d">Скидка в акции, %</label><input id="p-d" inputmode="decimal" value="20"></div>
+   <div class="field"><label for="p-com">Комиссия Uzum, %</label><input id="p-com" inputmode="decimal" value="20"></div>
+   <div class="field"><label for="p-tax">Налог, %</label><input id="p-tax" inputmode="decimal" value="4"></div>
+   <div class="field"><label for="p-var">Себестоимость + логистика, сум</label><input id="p-var" inputmode="decimal" value="48000"></div>
+   <div class="field"><label for="p-q">Продаж в неделю сейчас, шт</label><input id="p-q" inputmode="decimal" value="40"></div>
+  </div>
+  <div class="kpis"><div class="kpi"><span>Прибыль с 1 шт сейчас</span><b id="p-o-1">—</b></div><div class="kpi"><span>Прибыль с 1 шт в акции</span><b id="p-o-2">—</b></div><div class="kpi"><span>Нужный рост продаж</span><b id="p-o-x">—</b></div><div class="kpi"><span>Нужно продавать</span><b id="p-o-q">—</b></div></div>
+  <div class="verdict" id="p-v"></div>`;
+  bindCalc(el,()=>{
+    const P=num('p-pr'),d=num('p-d')/100,c=num('p-com')/100,t=num('p-tax')/100,V=num('p-var'),q=num('p-q');
+    const p1=P*(1-c-t)-V,P2=P*(1-d),p2=P2*(1-c-t)-V;
+    $('#p-o-1').textContent=fmt(p1)+' сум';$('#p-o-2').textContent=fmt(p2)+' сум';
+    const v=$('#p-v');
+    if(p2<=0){$('#p-o-x').textContent='—';$('#p-o-q').textContent='—';v.innerHTML=`<span class="chip bad">Убыток</span><span>В акции каждая продажа убыточна (${fmt(p2)} сум). Участвовать — только ради распродажи остатков или позиций, с согласованным лимитом потерь.</span>`;return}
+    if(p1<=0){$('#p-o-x').textContent='—';$('#p-o-q').textContent='—';v.innerHTML=`<span class="chip bad">Уже в минусе</span><span>Товар убыточен и без акции — сначала пересчитайте юнит-экономику.</span>`;return}
+    const x=p1/p2;$('#p-o-x').textContent='×'+fmt1(x);$('#p-o-q').textContent=fmt(Math.ceil(q*x))+' шт/нед';
+    if(x>=2.5)v.innerHTML=`<span class="chip warn">Рискованно</span><span>Чтобы заработать столько же, продажи должны вырасти в ${fmt1(x)} раза. Проверьте по прошлым акциям, бывало ли так, и хватит ли остатка на ${fmt(Math.ceil(q*x))} шт в неделю.</span>`;
+    else v.innerHTML=`<span class="chip good">Можно участвовать</span><span>Достаточно роста в ${fmt1(x)} раза — для акции с плашкой и трафиком это реально. Убедитесь, что остатка хватит.</span>`;
+  });
+},
+card(el){
+  el.className='widget';
+  el.innerHTML=`<div class="w-h"><h4>Проверка карточки</h4><span class="chip">черновик — замените своим</span></div>
+  <div class="fields">
+   <div class="field wide"><label for="c-what">Что за товар</label><input class="text" id="c-what" value="Сыворотка для лица с ниацинамидом 10%, 30 мл, бренд Glow Lab"></div>
+   <div class="field wide"><label for="c-tru">Название (RU)</label><input class="text" id="c-tru" value="СЫВОРОТКА ДЛЯ ЛИЦА ХИТ!!! Лучшая"></div>
+   <div class="field wide"><label for="c-tuz">Название (UZ)</label><input class="text" id="c-tuz" value="Yuz uchun zardob"></div>
+   <div class="field wide"><label for="c-kw">Ключевые слова через запятую</label><input class="text" id="c-kw" value="сыворотка, сыворотка для лица, ниацинамид"></div>
+   <div class="field wide"><label for="c-desc">Описание</label><textarea id="c-desc" rows="4">Лучшая сыворотка! Подходит всем. Пишите в телеграм для опта.</textarea></div>
+  </div>
+  <div class="row"><button class="btn" id="c-go" hidden>Проверить с ИИ</button><span class="ai-off" id="c-off">Проверка ИИ работает, когда страница открыта на claude.ai. Пока проверьте себя по списку ниже.</span></div>
+  <div id="c-out"></div>
+  <div class="selfcheck"><p class="eyebrow">Самопроверка</p>${['Название по формуле: тип + бренд + характеристика + объём','Главный запрос в начале названия','Нет капса, «хит», «лучший», восклицательных знаков','Ключевые слова на русском и узбекском, есть разговорные варианты','Описание: для кого → что даёт → как применять → состав','Нет контактов, ссылок, чужих брендов, медицинских обещаний'].map((t,i)=>`<label class="check" style="font-weight:500"><input type="checkbox" id="c-sc-${i}"> ${t}</label>`).join('')}</div>`;
+  getSample().then(sample=>{
+    if(!sample)return;
+    const go=$('#c-go'),off=$('#c-off');go.hidden=false;off.hidden=true;
+    go.onclick=async()=>{
+      const out=$('#c-out');go.disabled=true;out.innerHTML='<div class="ai-out muted">Проверяю карточку…</div>';
+      const prompt=`Ты — опытный менеджер маркетплейса Uzum Market (Узбекистан). Стажёр прислал учебную карточку товара. Оцени её строго, но доброжелательно, на русском языке.
+Критерии: 1) название по формуле «тип товара + бренд + ключевая характеристика + объём», главный запрос в начале, без капса, спама и слов «хит», «лучший»; 2) ключевые слова — покрытие запросов на русском и узбекском (латиница), синонимы, разговорные варианты; 3) описание — польза, структура, применение, состав; без контактов, ссылок, чужих брендов, медицинских обещаний; 4) качество узбекского названия.
+Ответь только JSON без пояснений: {"score": число 0-10, "verdict": "одна фраза", "good": ["до 3 пунктов"], "fix": ["до 5 конкретных правок"], "title_ru": "улучшенное название на русском", "title_uz": "улучшенное название на узбекском латиницей", "keywords": ["8-12 ключевых запросов на двух языках"]}
+
+Товар: ${$('#c-what').value}
+Название RU: ${$('#c-tru').value}
+Название UZ: ${$('#c-tuz').value}
+Ключевые слова: ${$('#c-kw').value}
+Описание: ${$('#c-desc').value}`;
+      try{
+        const r=await sample.json(prompt);
+        out.innerHTML=`<div class="ai-out"><div class="row"><span class="score">${esc(r.score??'—')}/10</span><span>${esc(r.verdict||'')}</span></div>${r.good&&r.good.length?`<div><b>Хорошо</b><ul>${r.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${r.fix&&r.fix.length?`<div><b>Исправить</b><ul>${r.fix.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${r.title_ru?`<div><b>Название RU:</b> ${esc(r.title_ru)}</div>`:''}${r.title_uz?`<div><b>Название UZ:</b> ${esc(r.title_uz)}</div>`:''}${r.keywords&&r.keywords.length?`<div><b>Ключевые запросы:</b> ${r.keywords.map(esc).join(', ')}</div>`:''}</div>`;
+      }catch(e){
+        if(HIDE_CODES.includes(e&&e.code)){go.hidden=true;off.hidden=false;out.innerHTML=''}
+        else out.innerHTML=`<div class="ai-out">${aiErr(e)}</div>`;
+      }finally{go.disabled=false}
+    };
+  });
+},
+review(el){
+  el.className='widget';
+  el.innerHTML=`<div class="w-h"><h4>Ответьте на отзыв</h4></div>
+  <div class="field"><label for="r-pick">Отзыв</label><select id="r-pick">${REVIEWS.map((r,i)=>`<option value="${i}">${'★'.repeat(r.s)}${'☆'.repeat(5-r.s)} · ${r.lang} · ${esc(r.t.slice(0,48))}${r.t.length>48?'…':''}</option>`).join('')}</select></div>
+  <div class="ai-out" id="r-text"></div>
+  <div class="field"><label for="r-ans">Ваш ответ</label><textarea id="r-ans" rows="4" placeholder="Напишите ответ на языке отзыва"></textarea></div>
+  <div class="row"><button class="btn" id="r-go" hidden>Проверить с ИИ</button><span class="ai-off" id="r-off">Проверка ИИ работает, когда страница открыта на claude.ai. Пока проверьте себя по списку ниже.</span></div>
+  <div id="r-out"></div>
+  <div class="selfcheck"><p class="eyebrow">Самопроверка</p>${['Поблагодарили или извинились','Ответили по сути, без шаблонных фраз','Предложили решение: возврат, инструкция, что изменили','Не спорите и не обвиняете покупателя','Нет контактов вне площадки','Язык ответа совпадает с языком отзыва'].map((t,i)=>`<label class="check" style="font-weight:500"><input type="checkbox" id="r-sc-${i}"> ${t}</label>`).join('')}</div>`;
+  const show=()=>{const r=REVIEWS[+$('#r-pick').value];$('#r-text').innerHTML=`<div><span class="chip">${'★'.repeat(r.s)}${'☆'.repeat(5-r.s)}</span> <span class="chip">${r.lang}</span></div><div>«${esc(r.t)}»</div>`;$('#r-out').innerHTML=''};
+  $('#r-pick').addEventListener('change',show);show();
+  getSample().then(sample=>{
+    if(!sample)return;
+    const go=$('#r-go'),off=$('#r-off');go.hidden=false;off.hidden=true;
+    go.onclick=async()=>{
+      const r=REVIEWS[+$('#r-pick').value],ans=$('#r-ans').value.trim(),out=$('#r-out');
+      if(!ans){out.innerHTML='<div class="ai-out">Сначала напишите ответ.</div>';return}
+      go.disabled=true;out.innerHTML='<div class="ai-out muted">Проверяю ответ…</div>';
+      const prompt=`Ты — старший менеджер магазина на Uzum Market (Узбекистан) и проверяешь ответ стажёра на отзыв покупателя. Правила хорошего ответа: поблагодарить или извиниться; ответить по сути без шаблонов; предложить решение (возврат через приложение Uzum, инструкция, что изменили в карточке); не спорить и не обвинять; не давать контакты вне площадки; язык ответа совпадает с языком отзыва; кратко (2–4 предложения). Если ответ на узбекском — оцени и грамотность узбекского.
+Ответь только JSON: {"score": 0-10, "good": ["до 3 пунктов"], "fix": ["до 4 конкретных правок"], "example": "образцовый ответ на языке отзыва"}. Пункты good и fix пиши на русском.
+
+Отзыв (${r.s} из 5, язык ${r.lang}): ${r.t}
+Ответ стажёра: ${ans}`;
+      try{
+        const j=await sample.json(prompt);
+        out.innerHTML=`<div class="ai-out"><div class="score">${esc(j.score??'—')}/10</div>${j.good&&j.good.length?`<div><b>Хорошо</b><ul>${j.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${j.fix&&j.fix.length?`<div><b>Исправить</b><ul>${j.fix.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${j.example?`<div><b>Образец:</b> ${esc(j.example)}</div>`:''}</div>`;
+      }catch(e){
+        if(HIDE_CODES.includes(e&&e.code)){go.hidden=true;off.hidden=false;out.innerHTML=''}
+        else out.innerHTML=`<div class="ai-out">${aiErr(e)}</div>`;
+      }finally{go.disabled=false}
+    };
+  });
+}
+};
+
+/* ================= CASE ================= */
+function renderCase(){
+  const showM=$('#case-metrics').checked;
+  $('#case').innerHTML=`<tr><th>Товар</th><th class="num">Показы</th><th class="num">Переходы</th><th class="num">Заказы</th><th class="num">Цена</th><th class="num">Конкуренты</th><th class="num">Рейтинг</th><th class="num">Остаток</th><th class="num">Продаж/день</th><th class="num">Рекл. расход</th><th class="num">Рекл. выручка</th><th class="num">Маржа до рекл.</th>${showM?'<th class="num">CTR</th><th class="num">Конв.</th><th class="num">Дней запаса</th><th class="num">ДРР</th>':''}<th>Что делать</th></tr>`+CASE.map((c,i)=>`<tr id="cr-${i}"><td><b>${c.n}</b><br><span class="sku">${c.sku}</span></td><td class="num">${fmt(c.imp)}</td><td class="num">${fmt(c.clk)}</td><td class="num">${c.ord}</td><td class="num">${fmt(c.price)}</td><td class="num">${fmt(c.comp)}</td><td class="num">${fmt1(c.rt)}</td><td class="num">${c.stock}</td><td class="num">${fmt1(c.spd)}</td><td class="num">${fmt(c.ads)}</td><td class="num">${fmt(c.adr)}</td><td class="num">${c.mg}%</td>${showM?`<td class="num">${fmt1(c.clk/c.imp*100)}%</td><td class="num">${fmt1(c.ord/c.clk*100)}%</td><td class="num">${fmt1(c.stock/c.spd)}</td><td class="num">${fmt1(c.ads/c.adr*100)}%</td>`:''}<td><select id="cs-${i}" data-case="${i}" aria-label="Решение для ${c.n}"><option value="">— выберите —</option>${CASE_OPTS.map((o,k)=>`<option value="${k}">${o}</option>`).join('')}</select><div class="res" id="cres-${i}" style="font-size:13.5px;margin-top:6px;max-width:260px"></div></td></tr>`).join('');
+  CASE.forEach((c,i)=>{if(caseSel[i]!=null)document.getElementById('cs-'+i).value=caseSel[i]});
+  if(caseChecked)checkCase(true);
+}
+let caseSel={},caseChecked=false;
+$('#case').addEventListener('change',e=>{const s=e.target.closest('[data-case]');if(s){caseSel[s.dataset.case]=s.value===''?null:s.value}});
+$('#case-metrics').addEventListener('change',renderCase);
+function checkCase(silent){
+  let ok=0,answered=0;
+  CASE.forEach((c,i)=>{
+    const v=caseSel[i],row=document.getElementById('cr-'+i),res=document.getElementById('cres-'+i);
+    row.classList.remove('okrow','badrow');
+    if(v==null){res.textContent='';return}
+    answered++;
+    if(+v===c.ans){ok++;row.classList.add('okrow');res.innerHTML='<b>Верно.</b> '+c.why}
+    else{row.classList.add('badrow');res.innerHTML='<b>Нет — '+CASE_OPTS[c.ans].toLowerCase()+'.</b> '+c.why}
+  });
+  caseChecked=true;
+  $('#case-score').textContent=`${ok} из 7 верно`+(answered<7?` · отвечено ${answered}`:'');
+  $('#case-score').className='chip '+(ok===7?'good':ok>=5?'warn':'bad');
+  if(!silent&&answered===7&&(S.caseBest==null||ok>S.caseBest)){S.caseBest=ok;persist();renderAllProgress()}
+}
+$('#case-check').addEventListener('click',()=>checkCase(false));
+$('#case-reset').addEventListener('click',()=>{caseSel={};caseChecked=false;$('#case-score').textContent='Не проверено';$('#case-score').className='chip';renderCase()});
+renderCase();
+
+/* ================= QUIZ ================= */
+let qf='all',qAns={};
+function renderQuiz(){
+  const mods=[['all','Все'],...LESSONS.map(l=>[l.id,'Урок '+l.n.replace(/^0/,'')])];
+  $('#qfilters').innerHTML=mods.map(m=>`<button data-qf="${m[0]}" aria-pressed="${qf===m[0]}">${m[1]}</button>`).join('');
+  const list=QUIZ.map((q,i)=>({q,i})).filter(x=>qf==='all'||x.q.m===qf);
+  $('#qlist').innerHTML=list.map(({q,i})=>{const a=qAns[i];return `<div class="q"><div class="qh"><span class="qt">${q.q}</span><span class="eyebrow" style="flex:0 0 auto">Урок ${q.m.slice(1)}</span></div><div class="opts">${q.a.map((o,k)=>`<button class="opt ${a!=null?(k===q.c?'right':k===a?'wrong':''):''}" data-q="${i}" data-k="${k}" ${a!=null?'disabled':''}>${o}</button>`).join('')}</div>${a!=null?`<div class="why-a"><b>${a===q.c?'Верно.':'Неверно.'}</b> ${q.w}</div>`:''}</div>`}).join('');
+  const done=Object.keys(qAns).length,right=Object.entries(qAns).filter(([i,a])=>QUIZ[i].c===a).length;
+  $('#qscore').textContent=`Верно ${right} из ${done}`+(done<QUIZ.length?` · всего ${QUIZ.length}`:'');
+}
+$('#qfilters').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');if(b){qf=b.dataset.qf;renderQuiz()}});
+$('#qlist').addEventListener('click',e=>{
+  const b=e.target.closest('[data-q]');if(!b||b.disabled)return;
+  qAns[b.dataset.q]=+b.dataset.k;
+  if(Object.keys(qAns).length===QUIZ.length){const right=Object.entries(qAns).filter(([i,a])=>QUIZ[i].c===a).length,pct=Math.round(right/QUIZ.length*100);if(S.quizBest==null||pct>S.quizBest){S.quizBest=pct;persist()}renderAllProgress()}
+  renderQuiz();
+});
+$('#qreset').addEventListener('click',()=>{qAns={};renderQuiz()});
+{const n=QUIZ.length,m10=n%10,m100=n%100;$('#quiz-h').textContent=`Тест: ${n} ${m10===1&&m100!==11?'вопрос':m10>=2&&m10<=4&&(m100<12||m100>14)?'вопроса':'вопросов'}`}
+renderQuiz();
+
+/* ================= INTERVIEW ================= */
+$('#routes').innerHTML=ROUTES.map(r=>`<div class="block"><span class="tagline">${r.tag}</span><h4>${r.t}</h4><p>${r.p}</p></div>`).join('');
+$('#qa').innerHTML=QA.map(x=>`<details class="qa"><summary>${x.q}</summary><div class="a">${x.a}</div></details>`).join('');
+$('#cl-vac').innerHTML=VACS.map((v,i)=>`<option value="${i}">${v.n}</option>`).join('');
+function buildLetter(){
+  const v=VACS[+$('#cl-vac').value]||VACS[0],name=$('#cl-name').value.trim()||'[Имя]';
+  const exp=$('#cl-exp').value.trim(),res=$('#cl-res').value.trim(),plus=$('#cl-plus').value.trim();
+  const co=v.n.replace(/\s*\(.*?\)|,.*$/g,'').trim();
+  return `Здравствуйте!
+
+Откликаюсь на вакансию менеджера маркетплейса в ${co}.
+
+Опыт: ${exp||'[кабинет, срок, объём]'}
+
+Результат: ${res||'[цифры: было → стало]'}
+
+Кроме того: ${plus||'[навыки]'}
+
+Считаю юнит-экономику до решений о скидках и ставках, веду остатки в Google Таблицах и еженедельный отчёт по воронке, ДРР и остаткам. Готов показать кабинет, таблицы и аудит карточек на встрече.
+
+${name}`;
+}
+function renderLetter(){$('#cl-out').textContent=buildLetter()}
+['cl-name','cl-vac','cl-exp','cl-res','cl-plus'].forEach(id=>document.getElementById(id).addEventListener('input',renderLetter));
+renderLetter();
+$('#cl-copy').addEventListener('click',()=>{
+  const t=$('#cl-out').textContent,m=$('#cl-msg');
+  navigator.clipboard.writeText(t).then(()=>{m.textContent='Скопировано'},()=>{const r=document.createRange();r.selectNodeContents($('#cl-out'));const s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent='Выделено — нажмите Ctrl+C / ⌘C'});
+});
+getSample().then(sample=>{
+  if(!sample)return;
+  const b=$('#cl-ai');b.hidden=false;
+  b.onclick=async()=>{
+    const m=$('#cl-msg');b.disabled=true;m.textContent='Улучшаю…';
+    const v=VACS[+$('#cl-vac').value];
+    try{
+      const {text}=await sample(`Ты — HR-консультант в Ташкенте. Улучши сопроводительное письмо кандидата на вакансию менеджера маркетплейса Uzum. Вакансия: ${v.n}; требования: ${v.exp}.
+Правила: на русском; 120–180 слов; первым абзацем — прямой ответ на вопрос «в каком кабинете работали, сколько месяцев, какой результат в цифрах»; НЕ выдумывай опыт, цифры и названия компаний — используй только факты из черновика, а если опыта мало, честно это покажи и сделай упор на навыки и готовность; без канцелярита и штампов. Верни только текст письма.
+
+Черновик:
+${$('#cl-out').textContent}`,{onText:({text})=>{$('#cl-out').textContent=text}});
+      $('#cl-out').textContent=text;m.textContent='Готово — проверьте, что все факты ваши';
+    }catch(e){
+      if(HIDE_CODES.includes(e&&e.code)){b.hidden=true;m.textContent=''}else m.textContent=aiErr(e);
+      if(e&&e.text)$('#cl-out').textContent=e.text;else renderLetter();
+    }finally{b.disabled=false}
+  };
+});
+
+/* mock interview */
+const HR_RULES=`Ты играешь роль руководителя отдела маркетплейсов в компании-дистрибьюторе косметики в Ташкенте и проводишь собеседование на позицию «Менеджер Uzum Market». Кандидат — начинающий, готовится по курсу.
+Правила: говори на русском; задавай ровно по одному вопросу за раз, всего 6 вопросов; вопросы практические: кейс падения продаж, окупаемость рекламы (ДРР/маржа), расчёт поставки, улучшение карточки с низким CTR, ответ на негативный отзыв, юнит-экономика или акция. После каждого ответа кандидата — короткая реакция (1–2 предложения, по делу; можно одно уточнение), затем следующий вопрос. Нумеруй вопросы «Вопрос N из 6». После ответа на 6-й вопрос дай итог: «Оценка: X/10», 3 сильные стороны, 3 зоны роста с конкретными советами, решение — пригласили бы на второй этап или нет и почему. Будь реалистичным и требовательным, но доброжелательным. Не пиши реплики за кандидата.`;
+let turns=[],chatCtl=null,chatSample=null;
+function addMsg(role,text){const d=document.createElement('div');d.className='msg '+(role==='assistant'?'hr':'me');d.innerHTML=`<span class="who">${role==='assistant'?'Руководитель':'Вы'}</span>`;const s=document.createElement('span');s.textContent=text;d.appendChild(s);$('#chat').appendChild(d);$('#chat').scrollTop=$('#chat').scrollHeight;return s}
+async function hrTurn(){
+  const bubble=addMsg('assistant','Думает…');
+  chatCtl=new AbortController();
+  $('#chat-send').disabled=true;$('#chat-stop').hidden=false;
+  try{
+    const {text}=await chatSample([{role:'user',content:HR_RULES+'\n\nНачни с короткого приветствия и первого вопроса.'},...turns],{cache:false,signal:chatCtl.signal,onText:({text})=>{bubble.textContent=text;$('#chat').scrollTop=$('#chat').scrollHeight}});
+    bubble.textContent=text;turns.push({role:'assistant',content:text});
+  }catch(e){
+    if(e&&e.code==='cancelled'){bubble.textContent=e.text||'Остановлено.';if(e.text)turns.push({role:'assistant',content:e.text})}
+    else if(HIDE_CODES.includes(e&&e.code)){bubble.parentElement.remove();$('#chat-controls').hidden=true;$('#chat-off').hidden=false}
+    else{bubble.textContent=(e&&e.text?e.text+'\n\n':'')+aiErr(e)}
+  }finally{$('#chat-send').disabled=false;$('#chat-stop').hidden=true}
+}
+getSample().then(sample=>{
+  chatSample=sample;
+  if(!sample){$('#chat-controls').hidden=true;$('#chat-off').hidden=false;return}
+});
+$('#chat-start').addEventListener('click',()=>{if(!chatSample)return;turns=[];$('#chat').innerHTML='';$('#chat-start').hidden=true;$('#chat-send').hidden=false;$('#chat-reset').hidden=false;$('#chat-in').placeholder='Ваш ответ руководителю';hrTurn()});
+$('#chat-send').addEventListener('click',()=>{const t=$('#chat-in').value.trim();if(!t||!chatSample)return;addMsg('user',t);turns.push({role:'user',content:t});$('#chat-in').value='';hrTurn()});
+$('#chat-in').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();$('#chat-send').click()}});
+$('#chat-stop').addEventListener('click',()=>chatCtl&&chatCtl.abort());
+$('#chat-reset').addEventListener('click',()=>{chatCtl&&chatCtl.abort();turns=[];$('#chat').innerHTML='';$('#chat-start').hidden=false;$('#chat-send').hidden=true;$('#chat-reset').hidden=true;$('#chat-in').placeholder='Сначала нажмите «Начать собеседование»'});
+
+/* ================= GLOSSARY ================= */
+function renderGloss(){
+  const q=$('#gq').value.trim().toLowerCase();
+  const rows=GLOSS.filter(g=>!q||g.join(' ').toLowerCase().includes(q));
+  $('#gl').innerHTML='<tr><th>Русский</th><th>Узбекский</th><th>Что это</th></tr>'+(rows.length?rows.map(g=>`<tr><td>${esc(g[0])}</td><td>${esc(g[1])}</td><td>${esc(g[2])}</td></tr>`).join(''):'<tr><td colspan="3" class="muted">Ничего не найдено — попробуйте другое слово.</td></tr>');
+}
+$('#gq').addEventListener('input',renderGloss);renderGloss();
+
+/* ================= INIT ================= */
+(function(){
+  const h=(location.hash||'').slice(1),isL=/^l[1-8]$/.test(h);
+  renderAllProgress();
+  openLesson(isL?h:'l1',true);
+  if(!isL)showTab(TABS.includes(h)?h:'route');
+})();
+</script>
